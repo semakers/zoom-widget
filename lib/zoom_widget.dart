@@ -17,6 +17,7 @@ class Zoom extends StatefulWidget {
   final bool centerOnScale;
   final double initZoom;
   final bool enableScroll;
+  final double zoomSensibility;
 
   Zoom(
       {Key key,
@@ -32,7 +33,8 @@ class Zoom extends StatefulWidget {
       this.colorScrollBars = Colors.black,
       this.centerOnScale = true,
       this.initZoom = 1.0,
-      this.enableScroll=true})
+      this.enableScroll=true, 
+      this.zoomSensibility=1.0})
       : super(key: key);
 
   _ZoomState createState() => _ZoomState();
@@ -196,7 +198,7 @@ class _ZoomState extends State<Zoom> {
               setState(() {
                 if (details.scale != 1.0) {
                   if (details.scale > changeScale) {
-                    double preScale = scale + (details.scale - changeScale);
+                    double preScale = scale + (details.scale - changeScale)/widget.zoomSensibility;
                     if (preScale < 1.0) {
                       scale = preScale;
                       scaleProcess(constraints);
@@ -204,7 +206,7 @@ class _ZoomState extends State<Zoom> {
                   } else if (changeScale > details.scale &&
                       (widget.width * scale > constraints.maxWidth ||
                           widget.height * scale > constraints.maxHeight)) {
-                    double preScale = scale - (changeScale - details.scale);
+                    double preScale = scale - (changeScale - details.scale)/widget.zoomSensibility;
 
                     if (portrait) {
                       if (preScale > (constraints.maxWidth / widget.width)) {
