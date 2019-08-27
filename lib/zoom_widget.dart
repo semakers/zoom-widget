@@ -255,7 +255,10 @@ class _ZoomState extends State<Zoom> {
                   } else
                     centerLeft = 0.0;
 
-                  widget.onScaleUpdate(scale, zoom);
+                  if(widget.onScaleUpdate!=null){
+                      widget.onScaleUpdate(scale, zoom);
+                  }
+                  
                   changeScale = details.scale;
                 } else {
                   if (details.focalPoint.dy > changeTop &&
@@ -283,9 +286,12 @@ class _ZoomState extends State<Zoom> {
                 }
               });
 
-              widget.onPositionUpdate(Offset(
+              if(widget.onPositionUpdate!=null){
+                  widget.onPositionUpdate(Offset(
                   (auxLeft + localLeft + centerLeft + scaleLeft) * -1,
                   (auxTop + localTop + centerTop + scaleTop) * -1));
+              }
+              
             },
             onScaleEnd: (details) {
               auxTop += localTop + scaleTop;
