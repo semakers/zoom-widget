@@ -23,45 +23,90 @@ You only need to create an instance of the Zoom class in the child of your Scaff
 
 ```dart
 Zoom(
-width: 1800,
-height: 1800,
-child: Center(
-child: Text("Happy zoom!!"),
-)
+    width: 1800,
+    height: 1800,
+    child: Center(
+        child: Text("Happy zoom!!"),
+    )
 );
 ```
 
 ### Callbacks
 
-It is possible to obtain the x and y position of our canvas with respect to the scrolls and and the zoom and scale of our canvas using two simple callbacks in our Zoom instance.
+It is possible to obtain the **x and y position** of our canvas with respect to the scrolls and and the **zoom and scale** of our canvas using two simple callbacks in our Zoom instance.
 
 ```dart
 Zoom(
-width: 1800,
-height: 1800,
-onPositionUpdate: (Offset position){
+    width: 1800,
+    height: 1800,
+    onPositionUpdate: (Offset position){
 
-print(position);
+        print(position);
 
-},
-onScaleUpdate: (double scale,double zoom){
+    },
+    onScaleUpdate: (double scale,double zoom){
 
-print("$scale  $zoom");
+        print("$scale  $zoom");
 
-},
-child: Center(
-child: Text("Happy zoom!!"),
-)
+    },
+    child: Center(
+        child: Text("Happy zoom!!"),
+    )
 );
 ```
-
 <img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" width="250" height="500" />
 
+### Customize properties
 
 
+Customizing the properties you can get amazing results.
+
+- width **double**.
+- height **double**.
+- backgroundColor **Color**.
+- canvasColor **Color**.
+- onPositionUpdate() **Callaback**.
+- onScaleUpdate() **Callaback**.
+-  scrollWeight **double**.
+- opacityScrollBars **double 0.0-1.0**.
+- colorScrollBars **Color**.
+- centerOnScale **bool**.
+- initZoom **double 0.0-1.0**.
+- enableScroll **bool**;
+- zoomSensibility  **double**;
+
+### Customized properties example
 
 
-
+```dart
+Zoom(
+    width: 1800,
+    height: 1800,
+    canvasColor: Colors.grey,
+    backgroundColor: Colors.orange,
+    colorScrollBars: Colors.purple,
+    opacityScrollBars: 0.9,
+    scrollWeight: 10.0,
+    centerOnScale: true,
+    enableScroll: true,
+    zoomSensibility: 2.3,
+    initZoom: 0.0,
+    onPositionUpdate: (position){
+        setState(() {
+            x=position.dx;
+            y=position.dy;
+        });
+    },
+    onScaleUpdate: (scale,zoom){
+        setState(() {
+            _zoom=zoom;
+        });
+    },
+    child: Center(
+        child: Text("x:${x.toStringAsFixed(2)} y:${y.toStringAsFixed(2)} zoom:${_zoom.toStringAsFixed(2)}",style: TextStyle(color: Colors.deepPurple,fontSize: 50),),
+    ),
+);
+```
 
 <img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" width="250" height="500" />
 
