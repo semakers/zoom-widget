@@ -5,7 +5,7 @@
 
 A new Flutter package project.
 
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" width="250" height="500" />  <img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" width="250" height="500" />
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" width="250" height="500" />  <img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" width="250" height="500" />
 
 ## Getting Started
 
