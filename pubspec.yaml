@@ -1,6 +1,6 @@
 name: zoom_widget
 description: Widget to zoom on a canvas of modifiable size that a child widcget can hold.
-version: 0.0.1
+version: 0.0.2
 author: Adrian Alvarez Galicia <semakers@gmail.com>
 homepage: https://github.com/semakers
 
