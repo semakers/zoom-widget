@@ -2,7 +2,7 @@
 
 A new Flutter package project.
 
-<img src="https://camo.githubusercontent.com/..." data-canonical-src="https://gyazo.com/eb5c5741b6a9a16c692170a41a49c858.png" width="200" height="400" />
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/example_one.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/example_one.gif" width="200" height="400" />
 
 ## Getting Started
 
