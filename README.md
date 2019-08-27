@@ -2,8 +2,16 @@
 
 <img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/header.png" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/header.png" width="300" height="200" />
 
+With this widget you can create a customizable canvas in which you can zoom in fluuter.
 
-A new Flutter package project.
+## Installation
+
+Add to pubspec.yaml:
+
+```yaml
+dependencies:
+zoom_widget: ^0.0.1
+```
 
 <img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" width="250" height="500" />  <img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" width="250" height="500" />
 
