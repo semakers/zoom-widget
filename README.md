@@ -1,4 +1,7 @@
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/header.png" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/header.png" width="213" height="141" />  <h1 Flutter zoom widget/>
+# Flutter zoom widget
+
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/header.png" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/header.png" width="213" height="141" />
+
 
 A new Flutter package project.
 
