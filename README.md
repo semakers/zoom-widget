@@ -2,7 +2,7 @@
 
 A new Flutter package project.
 
-![](example_one.gif)
+![](example_one.gif =250x250)
 
 ## Getting Started
 
