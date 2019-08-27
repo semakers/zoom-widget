@@ -2,6 +2,8 @@
 
 A new Flutter package project.
 
+![](example_one.gif)
+
 ## Getting Started
 
 This project is a starting point for a Dart
