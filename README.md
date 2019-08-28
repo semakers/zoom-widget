@@ -12,7 +12,7 @@ Add to pubspec.yaml:
 
 ```yaml
 dependencies:
-zoom_widget: ^0.0.21
+zoom_widget: ^0.1.0
 ```
 ## How to use
 
