@@ -12,7 +12,7 @@ Add to pubspec.yaml:
 
 ```yaml
 dependencies:
-zoom_widget: ^0.1.0
+zoom_widget: ^0.1.1
 ```
 ## How to use
 
@@ -74,6 +74,7 @@ Customizing the properties you can get amazing results.
 - initZoom **double 0.0-1.0**.
 - enableScroll **bool**;
 - zoomSensibility  **double**;
+- doubleTapZoom **bool**
 
 ### Customized properties example
 
@@ -89,6 +90,7 @@ Zoom(
     scrollWeight: 10.0,
     centerOnScale: true,
     enableScroll: true,
+    doubleTapZoom: true,
     zoomSensibility: 2.3,
     initZoom: 0.0,
     onPositionUpdate: (position){

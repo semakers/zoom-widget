@@ -1,3 +1,6 @@
+## [0.1.1]
+* double tap zoom added.
+
 ## [0.1.0]
 * example added.
 

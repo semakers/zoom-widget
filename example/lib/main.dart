@@ -14,8 +14,8 @@ class MyApp extends StatelessWidget {
           title: Text('Zoom example'),
         ),
         body: Zoom(
-          width: 1200,
-          height: 1200,
+          width: 1800,
+          height: 1800,
           initZoom: 0.0,
           child: Center(
             child: Container(

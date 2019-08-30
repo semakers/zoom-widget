@@ -17,6 +17,7 @@ class Zoom extends StatefulWidget {
   final double initZoom;
   final bool enableScroll;
   final double zoomSensibility;
+  final bool doubleTapZoom;
 
   Zoom(
       {Key key,
@@ -33,7 +34,8 @@ class Zoom extends StatefulWidget {
       this.centerOnScale = true,
       this.initZoom = 1.0,
       this.enableScroll = true,
-      this.zoomSensibility = 1.0})
+      this.zoomSensibility = 1.0,
+      this.doubleTapZoom = true})
       : super(key: key);
 
   _ZoomState createState() => _ZoomState();
@@ -90,10 +92,15 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
         scaleFixPosition(globalConstraints);
       });
       if (scaleAnimation.value == 1.0) {
-        widget.onScaleUpdate(scale, zoom);
-        widget.onPositionUpdate(Offset(
+        if(widget.onScaleUpdate!=null){
+          widget.onScaleUpdate(scale, zoom);
+        }
+        if( widget.onPositionUpdate!=null){
+           widget.onPositionUpdate(Offset(
             (auxLeft + localLeft + centerLeft + scaleLeft) * -1,
             (auxTop + localTop + centerTop + scaleTop) * -1));
+        }
+       
         endEscale(globalConstraints);
       }
     });
@@ -264,6 +271,16 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
               }
             }
           }
+          if(widget.onScaleUpdate!=null){
+             widget.onScaleUpdate(scale, widget.initZoom);
+          }
+       
+          if(widget.onPositionUpdate!=null){
+            widget.onPositionUpdate(Offset(
+            (auxLeft + localLeft + centerLeft + scaleLeft) * -1,
+            (auxTop + localTop + centerTop + scaleTop) * -1));
+          }
+        
         }
 
         if (!portrait && constraints.maxHeight > constraints.maxWidth) {
@@ -285,13 +302,15 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
               () => MultiTouchGestureRecognizer(),
               (MultiTouchGestureRecognizer instance) {
                 instance.onSingleTap = (point) {
-                  midlePoint = point;
-                  relativeMidlePoint = Offset(
-                      ((auxLeft + localLeft + centerLeft) * -1 +
-                              midlePoint.dx) *
-                          (1 / scale),
-                      ((auxTop + localTop + centerTop) * -1 + midlePoint.dy) *
-                          (1 / scale));
+                  if (widget.doubleTapZoom) {
+                    midlePoint = point;
+                    relativeMidlePoint = Offset(
+                        ((auxLeft + localLeft + centerLeft) * -1 +
+                                midlePoint.dx) *
+                            (1 / scale),
+                        ((auxTop + localTop + centerTop) * -1 + midlePoint.dy) *
+                            (1 / scale));
+                  }
                 };
                 instance.onMultiTap = (firstPoint, secondPoint) {
                   midlePoint = Offset((firstPoint.dx + secondPoint.dx) / 2.0,
@@ -309,14 +328,16 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
           },
           child: GestureDetector(
             onDoubleTap: () {
-              doubleTapScale = scale;
+              if (widget.doubleTapZoom) {
+                doubleTapScale = scale;
 
-              if (scale >= 0.99) {
-                doubleTapDown = false;
-              } else {
-                doubleTapDown = true;
+                if (scale >= 0.99) {
+                  doubleTapDown = false;
+                } else {
+                  doubleTapDown = true;
+                }
+                scaleAnimation.forward(from: 0.0);
               }
-              scaleAnimation.forward(from: 0.0);
             },
             onScaleStart: (details) {
               downTouchLeft = details.focalPoint.dx * (1 / scale);
@@ -360,7 +381,12 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
 
                   scaleProcess(constraints);
                   scaleFixPosition(constraints);
-                  widget.onScaleUpdate(scale, zoom);
+
+                  if( widget.onScaleUpdate!=null){
+                      widget.onScaleUpdate(scale, zoom);
+                  }
+
+                  
                   changeScale = details.scale;
                 } else {
                   if (details.focalPoint.dy > changeTop &&
@@ -388,9 +414,11 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
                 }
               });
 
-              widget.onPositionUpdate(Offset(
+              if(widget.onPositionUpdate!=null){
+                widget.onPositionUpdate(Offset(
                   (auxLeft + localLeft + centerLeft + scaleLeft) * -1,
                   (auxTop + localTop + centerTop + scaleTop) * -1));
+              }
             },
             onScaleEnd: (details) {
               endEscale(constraints);
