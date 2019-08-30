@@ -72,9 +72,9 @@ Customizing the properties you can get amazing results.
 - colorScrollBars **Color**.
 - centerOnScale **bool**.
 - initZoom **double 0.0-1.0**.
-- enableScroll **bool**;
-- zoomSensibility  **double**;
-- doubleTapZoom **bool**
+- enableScroll **bool**.
+- zoomSensibility  **double**.
+- doubleTapZoom **bool**.
 
 ### Customized properties example
 
