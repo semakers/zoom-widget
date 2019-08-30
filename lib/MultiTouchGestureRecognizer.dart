@@ -2,9 +2,9 @@ import "package:flutter/gestures.dart";
 
 class MultiTouchGestureRecognizer extends MultiTapGestureRecognizer {
   MultiTouchGestureRecognizerCallback onMultiTap;
+  SingleTouchGestureRecognizerCallback onSingleTap;
   Offset firstPoint;
   var numberOfTouches = 0;
-  int minNumberOfTouches = 0;
 
   MultiTouchGestureRecognizer() {
     super.onTapDown = (pointer, details) => this.addTouch(pointer, details);
@@ -18,6 +18,7 @@ class MultiTouchGestureRecognizer extends MultiTapGestureRecognizer {
     this.numberOfTouches++; 
     if(this.numberOfTouches==1){
       firstPoint=details.localPosition;
+      this.onSingleTap(details.localPosition);
     }
 
     if(this.numberOfTouches==2){
@@ -50,3 +51,4 @@ class MultiTouchGestureRecognizer extends MultiTapGestureRecognizer {
 }
 
 typedef MultiTouchGestureRecognizerCallback = void Function(Offset firstPoint, Offset secondPoint);
+typedef SingleTouchGestureRecognizerCallback = void Function(Offset point);
