@@ -14,9 +14,18 @@ Add to pubspec.yaml:
 dependencies:
 zoom_widget: ^0.1.1
 ```
+
+
+
 ## How to use
 
 You only need to create an instance of the Zoom class in the child of your Scaffold or within the widget of your choice, within the child attribute, put the widget that you want to zoom in and the width and height of the canvas where it will be made zoom.
+
+### Import
+
+```dart
+import 'package:zoom_widget/zoom_widget.dart';
+```
 
 ### Simple example
 
@@ -111,5 +120,26 @@ Zoom(
 ```
 
 <img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" width="250" height="500" />
+
+## Examples
+
+### Mobile
+
+In the **example/mobile** folder you will find the example ready to run with ***Flutter*** using the commands.
+
+```shell
+flutter pub get
+```
+
+```shell
+flutter run
+```
+
+### Desktop
+
+In the **example/desktop** folder you will find the example ready to run with ***Hover***.
+
+[Hover - Run Flutter apps on the desktop with hot-reload](https://github.com/go-flutter-desktop/hover)
+
 
 
