@@ -326,173 +326,178 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
               },
             ),
           },
-          child: GestureDetector(
-            onDoubleTap: () {
-              if (widget.doubleTapZoom) {
-                doubleTapScale = scale;
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onDoubleTap: () {
+                  if (widget.doubleTapZoom) {
+                    doubleTapScale = scale;
 
-                if (scale >= 0.99) {
-                  doubleTapDown = false;
-                } else {
-                  doubleTapDown = true;
-                }
-                scaleAnimation.forward(from: 0.0);
-              }
-            },
-            onScaleStart: (details) {
-              downTouchLeft = details.focalPoint.dx * (1 / scale);
-              downTouchTop = details.focalPoint.dy * (1 / scale);
-
-              changeScale = 1.0;
-              scaleLeft = 0;
-              changeTop = details.focalPoint.dy;
-              changeLeft = details.focalPoint.dx;
-            },
-            onScaleUpdate: (details) {
-              double up = details.focalPoint.dy - changeTop;
-              double down = (changeTop - details.focalPoint.dy) * -1;
-              double left = details.focalPoint.dx - changeLeft;
-              double right = (changeLeft - details.focalPoint.dx) * -1;
-
-              setState(() {
-                if (details.scale != 1.0) {
-                  if (details.scale > changeScale) {
-                    double preScale = scale +
-                        (details.scale - changeScale) / widget.zoomSensibility;
-                    if (preScale < 1.0) {
-                      scale = preScale;
-                    }
-                  } else if (changeScale > details.scale &&
-                      (widget.width * scale > constraints.maxWidth ||
-                          widget.height * scale > constraints.maxHeight)) {
-                    double preScale = scale -
-                        (changeScale - details.scale) / widget.zoomSensibility;
-
-                    if (portrait) {
-                      if (preScale > (constraints.maxWidth / widget.width)) {
-                        scale = preScale;
-                      }
+                    if (scale >= 0.99) {
+                      doubleTapDown = false;
                     } else {
-                      if (preScale > (constraints.maxHeight / widget.height)) {
-                        scale = preScale;
+                      doubleTapDown = true;
+                    }
+                    scaleAnimation.forward(from: 0.0);
+                  }
+                },
+              child: GestureDetector(
+                onScaleStart: (details) {
+                  downTouchLeft = details.focalPoint.dx * (1 / scale);
+                  downTouchTop = details.focalPoint.dy * (1 / scale);
+
+                  changeScale = 1.0;
+                  scaleLeft = 0;
+                  changeTop = details.focalPoint.dy;
+                  changeLeft = details.focalPoint.dx;
+                },
+                onScaleUpdate: (details) {
+                  double up = details.focalPoint.dy - changeTop;
+                  double down = (changeTop - details.focalPoint.dy) * -1;
+                  double left = details.focalPoint.dx - changeLeft;
+                  double right = (changeLeft - details.focalPoint.dx) * -1;
+
+                  setState(() {
+                    if (details.scale != 1.0) {
+                      if (details.scale > changeScale) {
+                        double preScale = scale +
+                            (details.scale - changeScale) / widget.zoomSensibility;
+                        if (preScale < 1.0) {
+                          scale = preScale;
+                        }
+                      } else if (changeScale > details.scale &&
+                          (widget.width * scale > constraints.maxWidth ||
+                              widget.height * scale > constraints.maxHeight)) {
+                        double preScale = scale -
+                            (changeScale - details.scale) / widget.zoomSensibility;
+
+                        if (portrait) {
+                          if (preScale > (constraints.maxWidth / widget.width)) {
+                            scale = preScale;
+                          }
+                        } else {
+                          if (preScale > (constraints.maxHeight / widget.height)) {
+                            scale = preScale;
+                          }
+                        }
+                      }
+
+                      scaleProcess(constraints);
+                      scaleFixPosition(constraints);
+
+                      if( widget.onScaleUpdate!=null){
+                          widget.onScaleUpdate(scale, zoom);
+                      }
+
+                      
+                      changeScale = details.scale;
+                    } else {
+                      if (details.focalPoint.dy > changeTop &&
+                          (auxTop + up) < 0 &&
+                          (auxTop + up) >
+                              -((widget.height) * scale - constraints.maxHeight)) {
+                        localTop = up;
+                      } else if (changeTop > details.focalPoint.dy &&
+                          (auxTop + down) < 0 &&
+                          (auxTop + down) >
+                              -((widget.height) * scale - constraints.maxHeight)) {
+                        localTop = down;
+                      }
+                      if (details.focalPoint.dx > changeLeft &&
+                          (auxLeft + right) < 0 &&
+                          (auxLeft + right) >
+                              -((widget.width * scale) - constraints.maxWidth)) {
+                        localLeft = right;
+                      } else if (changeLeft > details.focalPoint.dx &&
+                          (auxLeft + left) < 0 &&
+                          (auxLeft + left) >
+                              -((widget.width * scale) - constraints.maxWidth)) {
+                        localLeft = left;
                       }
                     }
-                  }
+                  });
 
-                  scaleProcess(constraints);
-                  scaleFixPosition(constraints);
-
-                  if( widget.onScaleUpdate!=null){
-                      widget.onScaleUpdate(scale, zoom);
+                  if(widget.onPositionUpdate!=null){
+                    widget.onPositionUpdate(Offset(
+                      (auxLeft + localLeft + centerLeft + scaleLeft) * -1,
+                      (auxTop + localTop + centerTop + scaleTop) * -1));
                   }
-
-                  
-                  changeScale = details.scale;
-                } else {
-                  if (details.focalPoint.dy > changeTop &&
-                      (auxTop + up) < 0 &&
-                      (auxTop + up) >
-                          -((widget.height) * scale - constraints.maxHeight)) {
-                    localTop = up;
-                  } else if (changeTop > details.focalPoint.dy &&
-                      (auxTop + down) < 0 &&
-                      (auxTop + down) >
-                          -((widget.height) * scale - constraints.maxHeight)) {
-                    localTop = down;
-                  }
-                  if (details.focalPoint.dx > changeLeft &&
-                      (auxLeft + right) < 0 &&
-                      (auxLeft + right) >
-                          -((widget.width * scale) - constraints.maxWidth)) {
-                    localLeft = right;
-                  } else if (changeLeft > details.focalPoint.dx &&
-                      (auxLeft + left) < 0 &&
-                      (auxLeft + left) >
-                          -((widget.width * scale) - constraints.maxWidth)) {
-                    localLeft = left;
-                  }
-                }
-              });
-
-              if(widget.onPositionUpdate!=null){
-                widget.onPositionUpdate(Offset(
-                  (auxLeft + localLeft + centerLeft + scaleLeft) * -1,
-                  (auxTop + localTop + centerTop + scaleTop) * -1));
-              }
-            },
-            onScaleEnd: (details) {
-              endEscale(constraints);
-            },
-            child: Container(
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-              color: widget.backgroundColor,
-              child: Stack(
-                children: <Widget>[
-                  Positioned(
-                    top: auxTop + localTop + centerTop + scaleTop,
-                    left: auxLeft + localLeft + centerLeft + scaleLeft,
-                    child: Transform.scale(
-                      scale: scale,
-                      alignment: Alignment.topLeft,
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: widget.canvasColor,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black45,
-                                blurRadius:
-                                    20.0, // has the effect of softening the shadow
-                                spreadRadius:
-                                    5.0, // has the effect of extending the shadow
-                                offset: Offset(
-                                  10.0, // horizontal, move right 10
-                                  10.0, // vertical, move down 10
-                                ),
-                              )
-                            ]),
-                        width: widget.width,
-                        height: widget.height,
-                        child: widget.child,
+                },
+                onScaleEnd: (details) {
+                  endEscale(constraints);
+                },
+                child: Container(
+                  width: constraints.maxWidth,
+                  height: constraints.maxHeight,
+                  color: widget.backgroundColor,
+                  child: Stack(
+                    children: <Widget>[
+                      Positioned(
+                        top: auxTop + localTop + centerTop + scaleTop,
+                        left: auxLeft + localLeft + centerLeft + scaleLeft,
+                        child: Transform.scale(
+                          scale: scale,
+                          alignment: Alignment.topLeft,
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: widget.canvasColor,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black45,
+                                    blurRadius:
+                                        20.0, // has the effect of softening the shadow
+                                    spreadRadius:
+                                        5.0, // has the effect of extending the shadow
+                                    offset: Offset(
+                                      10.0, // horizontal, move right 10
+                                      10.0, // vertical, move down 10
+                                    ),
+                                  )
+                                ]),
+                            width: widget.width,
+                            height: widget.height,
+                            child: widget.child,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    top: constraints.maxHeight - widget.scrollWeight,
-                    left: -(auxLeft + localLeft + centerLeft + scaleLeft) /
-                        ((widget.width * scale) / constraints.maxWidth),
-                    child: Opacity(
-                      opacity: (widget.width * scale <= constraints.maxWidth ||
-                              !widget.enableScroll)
-                          ? 0
-                          : widget.opacityScrollBars,
-                      child: Container(
-                        height: widget.scrollWeight,
-                        width: constraints.maxWidth /
+                      Positioned(
+                        top: constraints.maxHeight - widget.scrollWeight,
+                        left: -(auxLeft + localLeft + centerLeft + scaleLeft) /
                             ((widget.width * scale) / constraints.maxWidth),
-                        color: widget.colorScrollBars,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: -(auxTop + localTop + centerTop + scaleTop) /
-                        ((widget.height * scale) / constraints.maxHeight),
-                    left: constraints.maxWidth - widget.scrollWeight,
-                    child: Opacity(
-                      opacity:
-                          (widget.height * scale <= constraints.maxHeight ||
+                        child: Opacity(
+                          opacity: (widget.width * scale <= constraints.maxWidth ||
                                   !widget.enableScroll)
                               ? 0
                               : widget.opacityScrollBars,
-                      child: Container(
-                        width: widget.scrollWeight,
-                        height: constraints.maxHeight /
-                            ((widget.height * scale) / constraints.maxHeight),
-                        color: widget.colorScrollBars,
+                          child: Container(
+                            height: widget.scrollWeight,
+                            width: constraints.maxWidth /
+                                ((widget.width * scale) / constraints.maxWidth),
+                            color: widget.colorScrollBars,
+                          ),
+                        ),
                       ),
-                    ),
-                  )
-                ],
+                      Positioned(
+                        top: -(auxTop + localTop + centerTop + scaleTop) /
+                            ((widget.height * scale) / constraints.maxHeight),
+                        left: constraints.maxWidth - widget.scrollWeight,
+                        child: Opacity(
+                          opacity:
+                              (widget.height * scale <= constraints.maxHeight ||
+                                      !widget.enableScroll)
+                                  ? 0
+                                  : widget.opacityScrollBars,
+                          child: Container(
+                            width: widget.scrollWeight,
+                            height: constraints.maxHeight /
+                                ((widget.height * scale) / constraints.maxHeight),
+                            color: widget.colorScrollBars,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

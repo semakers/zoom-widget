@@ -1,4 +1,7 @@
-## [0.1.1]
+## [0.1.3]
+* ios double tap support added. 
+
+## [0.1.2]
 * desktop example added.
 * documentation updated.
 
