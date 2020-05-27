@@ -329,18 +329,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onDoubleTap: () {
-                  if (widget.doubleTapZoom) {
-                    doubleTapScale = scale;
-
-                    if (scale >= 0.99) {
-                      doubleTapDown = false;
-                    } else {
-                      doubleTapDown = true;
-                    }
-                    scaleAnimation.forward(from: 0.0);
-                  }
-                },
+              onDoubleTap: widget.doubleTapZoom ? () => _onDoubleTap() : null,
               child: GestureDetector(
                 onScaleStart: (details) {
                   downTouchLeft = details.focalPoint.dx * (1 / scale);
@@ -504,5 +493,16 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
         );
       },
     );
+  }
+
+  void _onDoubleTap() {
+    doubleTapScale = scale;
+
+    if (scale >= 0.99) {
+      doubleTapDown = false;
+    } else {
+      doubleTapDown = true;
+    }
+    scaleAnimation.forward(from: 0.0);
   }
 }
