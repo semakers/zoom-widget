@@ -19,6 +19,7 @@ class Zoom extends StatefulWidget {
   final double zoomSensibility;
   final bool doubleTapZoom;
   final BoxShadow canvasShadow;
+  final Function onTap;
 
   Zoom(
       {Key key,
@@ -37,7 +38,8 @@ class Zoom extends StatefulWidget {
       this.enableScroll = true,
       this.zoomSensibility = 1.0,
       this.doubleTapZoom = true,
-      this.canvasShadow})
+      this.canvasShadow,
+      this.onTap})
       : super(key: key);
 
   _ZoomState createState() => _ZoomState();
@@ -333,6 +335,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
             ),
           },
           child: GestureDetector(
+            onTap: widget.onTap,
             onDoubleTap: () {
               if (widget.doubleTapZoom) {
                 doubleTapScale = scale;
