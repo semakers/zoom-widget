@@ -332,181 +332,173 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
               },
             ),
           },
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onDoubleTap: () {
-                if (widget.doubleTapZoom) {
-                  doubleTapScale = scale;
+          child: GestureDetector(
+            onDoubleTap: () {
+              if (widget.doubleTapZoom) {
+                doubleTapScale = scale;
 
-                  if (scale >= 0.99) {
-                    doubleTapDown = false;
-                  } else {
-                    doubleTapDown = true;
-                  }
-                  scaleAnimation.forward(from: 0.0);
+                if (scale >= 0.99) {
+                  doubleTapDown = false;
+                } else {
+                  doubleTapDown = true;
                 }
-              },
-              child: GestureDetector(
-                onScaleStart: (details) {
-                  downTouchLeft = details.focalPoint.dx * (1 / scale);
-                  downTouchTop = details.focalPoint.dy * (1 / scale);
+                scaleAnimation.forward(from: 0.0);
+              }
+            },
+            onScaleStart: (details) {
+              downTouchLeft = details.focalPoint.dx * (1 / scale);
+              downTouchTop = details.focalPoint.dy * (1 / scale);
 
-                  changeScale = 1.0;
-                  scaleLeft = 0;
-                  changeTop = details.focalPoint.dy;
-                  changeLeft = details.focalPoint.dx;
-                },
-                onScaleUpdate: (details) {
-                  double up = details.focalPoint.dy - changeTop;
-                  double down = (changeTop - details.focalPoint.dy) * -1;
-                  double left = details.focalPoint.dx - changeLeft;
-                  double right = (changeLeft - details.focalPoint.dx) * -1;
+              changeScale = 1.0;
+              scaleLeft = 0;
+              changeTop = details.focalPoint.dy;
+              changeLeft = details.focalPoint.dx;
+            },
+            onScaleUpdate: (details) {
+              double up = details.focalPoint.dy - changeTop;
+              double down = (changeTop - details.focalPoint.dy) * -1;
+              double left = details.focalPoint.dx - changeLeft;
+              double right = (changeLeft - details.focalPoint.dx) * -1;
 
-                  setState(() {
-                    if (details.scale != 1.0) {
-                      if (details.scale > changeScale) {
-                        double preScale = scale +
-                            (details.scale - changeScale) /
-                                widget.zoomSensibility;
-                        if (preScale < 1.0) {
-                          scale = preScale;
-                        }
-                      } else if (changeScale > details.scale &&
-                          (widget.maxZoomWidth * scale > constraints.maxWidth ||
-                              widget.maxZoomHeight * scale >
-                                  constraints.maxHeight)) {
-                        double preScale = scale -
-                            (changeScale - details.scale) /
-                                widget.zoomSensibility;
+              setState(() {
+                if (details.scale != 1.0) {
+                  if (details.scale > changeScale) {
+                    double preScale = scale +
+                        (details.scale - changeScale) / widget.zoomSensibility;
+                    if (preScale < 1.0) {
+                      scale = preScale;
+                    }
+                  } else if (changeScale > details.scale &&
+                      (widget.maxZoomWidth * scale > constraints.maxWidth ||
+                          widget.maxZoomHeight * scale >
+                              constraints.maxHeight)) {
+                    double preScale = scale -
+                        (changeScale - details.scale) / widget.zoomSensibility;
 
-                        if (portrait) {
-                          if (preScale >
-                              (constraints.maxWidth / widget.maxZoomWidth)) {
-                            scale = preScale;
-                          }
-                        } else {
-                          if (preScale >
-                              (constraints.maxHeight / widget.maxZoomHeight)) {
-                            scale = preScale;
-                          }
-                        }
+                    if (portrait) {
+                      if (preScale >
+                          (constraints.maxWidth / widget.maxZoomWidth)) {
+                        scale = preScale;
                       }
-
-                      scaleProcess(constraints);
-                      scaleFixPosition(constraints);
-
-                      if (widget.onScaleUpdate != null) {
-                        widget.onScaleUpdate(scale, zoom);
-                      }
-
-                      changeScale = details.scale;
                     } else {
-                      if (details.focalPoint.dy > changeTop &&
-                          (auxTop + up) < 0 &&
-                          (auxTop + up) >
-                              -((widget.maxZoomHeight) * scale -
-                                  constraints.maxHeight)) {
-                        localTop = up;
-                      } else if (changeTop > details.focalPoint.dy &&
-                          (auxTop + down) < 0 &&
-                          (auxTop + down) >
-                              -((widget.maxZoomHeight) * scale -
-                                  constraints.maxHeight)) {
-                        localTop = down;
-                      }
-                      if (details.focalPoint.dx > changeLeft &&
-                          (auxLeft + right) < 0 &&
-                          (auxLeft + right) >
-                              -((widget.maxZoomWidth * scale) -
-                                  constraints.maxWidth)) {
-                        localLeft = right;
-                      } else if (changeLeft > details.focalPoint.dx &&
-                          (auxLeft + left) < 0 &&
-                          (auxLeft + left) >
-                              -((widget.maxZoomWidth * scale) -
-                                  constraints.maxWidth)) {
-                        localLeft = left;
+                      if (preScale >
+                          (constraints.maxHeight / widget.maxZoomHeight)) {
+                        scale = preScale;
                       }
                     }
-                  });
-
-                  if (widget.onPositionUpdate != null) {
-                    widget.onPositionUpdate(Offset(
-                        (auxLeft + localLeft + centerLeft + scaleLeft) * -1,
-                        (auxTop + localTop + centerTop + scaleTop) * -1));
                   }
-                },
-                onScaleEnd: (details) {
-                  endEscale(constraints);
-                },
-                child: Container(
-                  width: constraints.maxWidth,
-                  height: constraints.maxHeight,
-                  color: widget.backgroundColor,
-                  child: Stack(
-                    children: <Widget>[
-                      Positioned(
-                        top: auxTop + localTop + centerTop + scaleTop,
-                        left: auxLeft + localLeft + centerLeft + scaleLeft,
-                        child: Transform.scale(
-                          scale: scale,
-                          alignment: Alignment.topLeft,
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: widget.canvasColor,
-                                boxShadow: widget.canvasShadow != null
-                                    ? [widget.canvasShadow]
-                                    : null),
-                            width: widget.maxZoomWidth,
-                            height: widget.maxZoomHeight,
-                            child: widget.child,
-                          ),
-                        ),
+
+                  scaleProcess(constraints);
+                  scaleFixPosition(constraints);
+
+                  if (widget.onScaleUpdate != null) {
+                    widget.onScaleUpdate(scale, zoom);
+                  }
+
+                  changeScale = details.scale;
+                } else {
+                  if (details.focalPoint.dy > changeTop &&
+                      (auxTop + up) < 0 &&
+                      (auxTop + up) >
+                          -((widget.maxZoomHeight) * scale -
+                              constraints.maxHeight)) {
+                    localTop = up;
+                  } else if (changeTop > details.focalPoint.dy &&
+                      (auxTop + down) < 0 &&
+                      (auxTop + down) >
+                          -((widget.maxZoomHeight) * scale -
+                              constraints.maxHeight)) {
+                    localTop = down;
+                  }
+                  if (details.focalPoint.dx > changeLeft &&
+                      (auxLeft + right) < 0 &&
+                      (auxLeft + right) >
+                          -((widget.maxZoomWidth * scale) -
+                              constraints.maxWidth)) {
+                    localLeft = right;
+                  } else if (changeLeft > details.focalPoint.dx &&
+                      (auxLeft + left) < 0 &&
+                      (auxLeft + left) >
+                          -((widget.maxZoomWidth * scale) -
+                              constraints.maxWidth)) {
+                    localLeft = left;
+                  }
+                }
+              });
+
+              if (widget.onPositionUpdate != null) {
+                widget.onPositionUpdate(Offset(
+                    (auxLeft + localLeft + centerLeft + scaleLeft) * -1,
+                    (auxTop + localTop + centerTop + scaleTop) * -1));
+              }
+            },
+            onScaleEnd: (details) {
+              endEscale(constraints);
+            },
+            child: Container(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              color: widget.backgroundColor,
+              child: Stack(
+                children: <Widget>[
+                  Positioned(
+                    top: auxTop + localTop + centerTop + scaleTop,
+                    left: auxLeft + localLeft + centerLeft + scaleLeft,
+                    child: Transform.scale(
+                      scale: scale,
+                      alignment: Alignment.topLeft,
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: widget.canvasColor,
+                            boxShadow: widget.canvasShadow != null
+                                ? [widget.canvasShadow]
+                                : null),
+                        width: widget.maxZoomWidth,
+                        height: widget.maxZoomHeight,
+                        child: widget.child,
                       ),
-                      Positioned(
-                        top: constraints.maxHeight - widget.scrollWeight,
-                        left: -(auxLeft + localLeft + centerLeft + scaleLeft) /
+                    ),
+                  ),
+                  Positioned(
+                    top: constraints.maxHeight - widget.scrollWeight,
+                    left: -(auxLeft + localLeft + centerLeft + scaleLeft) /
+                        ((widget.maxZoomWidth * scale) / constraints.maxWidth),
+                    child: Opacity(
+                      opacity: (widget.maxZoomWidth * scale <=
+                                  constraints.maxWidth ||
+                              !widget.enableScroll)
+                          ? 0
+                          : widget.opacityScrollBars,
+                      child: Container(
+                        height: widget.scrollWeight,
+                        width: constraints.maxWidth /
                             ((widget.maxZoomWidth * scale) /
                                 constraints.maxWidth),
-                        child: Opacity(
-                          opacity: (widget.maxZoomWidth * scale <=
-                                      constraints.maxWidth ||
-                                  !widget.enableScroll)
-                              ? 0
-                              : widget.opacityScrollBars,
-                          child: Container(
-                            height: widget.scrollWeight,
-                            width: constraints.maxWidth /
-                                ((widget.maxZoomWidth * scale) /
-                                    constraints.maxWidth),
-                            color: widget.colorScrollBars,
-                          ),
-                        ),
+                        color: widget.colorScrollBars,
                       ),
-                      Positioned(
-                        top: -(auxTop + localTop + centerTop + scaleTop) /
+                    ),
+                  ),
+                  Positioned(
+                    top: -(auxTop + localTop + centerTop + scaleTop) /
+                        ((widget.maxZoomHeight * scale) /
+                            constraints.maxHeight),
+                    left: constraints.maxWidth - widget.scrollWeight,
+                    child: Opacity(
+                      opacity: (widget.maxZoomHeight * scale <=
+                                  constraints.maxHeight ||
+                              !widget.enableScroll)
+                          ? 0
+                          : widget.opacityScrollBars,
+                      child: Container(
+                        width: widget.scrollWeight,
+                        height: constraints.maxHeight /
                             ((widget.maxZoomHeight * scale) /
                                 constraints.maxHeight),
-                        left: constraints.maxWidth - widget.scrollWeight,
-                        child: Opacity(
-                          opacity: (widget.maxZoomHeight * scale <=
-                                      constraints.maxHeight ||
-                                  !widget.enableScroll)
-                              ? 0
-                              : widget.opacityScrollBars,
-                          child: Container(
-                            width: widget.scrollWeight,
-                            height: constraints.maxHeight /
-                                ((widget.maxZoomHeight * scale) /
-                                    constraints.maxHeight),
-                            color: widget.colorScrollBars,
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
+                        color: widget.colorScrollBars,
+                      ),
+                    ),
+                  )
+                ],
               ),
             ),
           ),
