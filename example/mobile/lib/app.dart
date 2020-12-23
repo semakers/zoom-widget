@@ -14,6 +14,9 @@ class MyApp extends StatelessWidget {
         body: Zoom(
           maxZoomWidth: 1800,
           maxZoomHeight: 1800,
+          onTap: () {
+            print("You click the widget!");
+          },
           initZoom: 0.0,
           child: Center(
             child: Container(
