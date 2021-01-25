@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zoom_widget/zoom_widget.dart';
- 
- 
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -13,9 +12,12 @@ class MyApp extends StatelessWidget {
           title: Text('Zoom example'),
         ),
         body: Zoom(
-          width: 1800,
-          height: 1800,
+          maxZoomWidth: 1800,
+          maxZoomHeight: 1800,
           initZoom: 0.0,
+          onTap: () {
+            print("You click the widget!");
+          },
           child: Center(
             child: Container(
               child: Text('Hello World'),

@@ -32,8 +32,8 @@ import 'package:zoom_widget/zoom_widget.dart';
 
 ```dart
 Zoom(
-    width: 1800,
-    height: 1800,
+    maxZoomWidth: 1800,
+    maxZoomHeight: 1800,
     child: Center(
         child: Text("Happy zoom!!"),
     )
@@ -46,8 +46,11 @@ It is possible to obtain the **x and y position** of our canvas with respect to 
 
 ```dart
 Zoom(
-    width: 1800,
-    height: 1800,
+    maxZoomWidth: 1800,
+    maxZoomHeight: 1800,
+    onTap: (){
+        print("Widget clicked");
+    }
     onPositionUpdate: (Offset position){
 
         print(position);
@@ -70,12 +73,15 @@ Zoom(
 
 Customizing the properties you can get amazing results.
 
-- width **double**.
-- height **double**.
+- width (Depreceted) **double**. 
+- height (Depreceted) **double**. 
+- maxZoomWidth **double**. 
+- maxZoomHeight **double**. 
 - backgroundColor **Color**.
 - canvasColor **Color**.
 - onPositionUpdate() **Callaback**.
 - onScaleUpdate() **Callaback**.
+- onTap() **Callaback**.
 -  scrollWeight **double**.
 - opacityScrollBars **double 0.0-1.0**.
 - colorScrollBars **Color**.
@@ -90,8 +96,8 @@ Customizing the properties you can get amazing results.
 
 ```dart
 Zoom(
-    width: 1800,
-    height: 1800,
+    maxZoomWidth: 1800,
+    maxZoomHeight: 1800,
     canvasColor: Colors.grey,
     backgroundColor: Colors.orange,
     colorScrollBars: Colors.purple,
@@ -102,6 +108,9 @@ Zoom(
     doubleTapZoom: true,
     zoomSensibility: 2.3,
     initZoom: 0.0,
+    onTap: (){ 
+        print("Widget clicked");
+    }
     onPositionUpdate: (position){
         setState(() {
             x=position.dx;

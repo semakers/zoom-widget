@@ -11,23 +11,21 @@ class MultiTouchGestureRecognizer extends MultiTapGestureRecognizer {
     super.onTapUp = (pointer, details) => this.removeTouch(pointer, details);
     super.onTapCancel = (pointer) => this.cancelTouch(pointer);
     super.onTap = (pointer) => this.captureDefaultTap(pointer);
-    
   }
 
   void addTouch(int pointer, TapDownDetails details) {
-    this.numberOfTouches++; 
-    if(this.numberOfTouches==1){
-      firstPoint=details.localPosition;
+    this.numberOfTouches++;
+    if (this.numberOfTouches == 1) {
+      firstPoint = details.localPosition;
       this.onSingleTap(details.localPosition);
     }
 
-    if(this.numberOfTouches==2){
-      this.onMultiTap(firstPoint,details.localPosition);
+    if (this.numberOfTouches == 2) {
+      this.onMultiTap(firstPoint, details.localPosition);
     }
   }
 
   void removeTouch(int pointer, TapUpDetails details) {
-
     this.numberOfTouches = 0;
   }
 
@@ -36,7 +34,7 @@ class MultiTouchGestureRecognizer extends MultiTapGestureRecognizer {
   }
 
   void captureDefaultTap(int pointer) {}
-  
+
   @override
   set onTapDown(_onTapDown) {}
 
@@ -50,5 +48,6 @@ class MultiTouchGestureRecognizer extends MultiTapGestureRecognizer {
   set onTap(_onTap) {}
 }
 
-typedef MultiTouchGestureRecognizerCallback = void Function(Offset firstPoint, Offset secondPoint);
+typedef MultiTouchGestureRecognizerCallback = void Function(
+    Offset firstPoint, Offset secondPoint);
 typedef SingleTouchGestureRecognizerCallback = void Function(Offset point);
