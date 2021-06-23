@@ -1,11 +1,11 @@
 name: zoom_widget
 description: Widget to zoom on a canvas of modifiable size that a child widget can hold.
-version: 0.2.0
+version: 0.2.1
 author: Adrian Alvarez Galicia <semakers@gmail.com>
 homepage: https://github.com/semakers
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
