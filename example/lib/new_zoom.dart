@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -6,12 +7,12 @@ import 'package:vector_math/vector_math_64.dart' show Quad, Vector3, Matrix4;
 
 import 'package:flutter/material.dart';
 
-typedef ZoomWidgetBuilder = Widget Function(
+typedef NewZoomWidgetBuilder = Widget Function(
     BuildContext context, Quad viewport);
 
 @immutable
-class Zoom extends StatefulWidget {
-  Zoom({
+class NewZoom extends StatefulWidget {
+  NewZoom({
     Key? key,
     this.boundaryMargin = EdgeInsets.zero,
     this.maxScale = 2.5,
@@ -140,10 +141,10 @@ class Zoom extends StatefulWidget {
     }
 
     final List<Vector3> closestPoints = <Vector3>[
-      Zoom.getNearestPointOnLine(point, quad.point0, quad.point1),
-      Zoom.getNearestPointOnLine(point, quad.point1, quad.point2),
-      Zoom.getNearestPointOnLine(point, quad.point2, quad.point3),
-      Zoom.getNearestPointOnLine(point, quad.point3, quad.point0),
+      NewZoom.getNearestPointOnLine(point, quad.point0, quad.point1),
+      NewZoom.getNearestPointOnLine(point, quad.point1, quad.point2),
+      NewZoom.getNearestPointOnLine(point, quad.point2, quad.point3),
+      NewZoom.getNearestPointOnLine(point, quad.point3, quad.point0),
     ];
     double minDistance = double.infinity;
     late Vector3 closestOverall;
@@ -161,10 +162,10 @@ class Zoom extends StatefulWidget {
   }
 
   @override
-  State<Zoom> createState() => _ZoomState();
+  State<NewZoom> createState() => _NewZoomState();
 }
 
-class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
+class _NewZoomState extends State<NewZoom> with TickerProviderStateMixin {
   TransformationController? _transformationController;
 
   final GlobalKey _childKey = GlobalKey();
@@ -196,7 +197,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
         widget.boundaryMargin.inflateRect(Offset.zero & childSize);
     assert(
       !boundaryRect.isEmpty,
-      "Zoom's child must have nonzero dimensions.",
+      "NewZoom's child must have nonzero dimensions.",
     );
 
     assert(
@@ -641,6 +642,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     final Offset animationScene = _transformationController!.toScene(
       _animation!.value,
     );
+    log('animate');
     final Offset translationChangeScene = animationScene - translationScene;
     _transformationController!.value = _matrixTranslate(
       _transformationController!.value,
@@ -665,7 +667,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
   }
 
   @override
-  void didUpdateWidget(Zoom oldWidget) {
+  void didUpdateWidget(NewZoom oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.transformationController == null) {
@@ -723,7 +725,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     Widget child;
-    child = _ZoomBuilt(
+    child = _NewZoomBuilt(
       childKey: _childKey,
       constrained: false,
       matrix: _transformationController!.value,
@@ -825,7 +827,9 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
             onScaleEnd: _onScaleEnd,
             onScaleStart: _onScaleStart,
             onScaleUpdate: _onScaleUpdate,
-            onDoubleTap: () {},
+            onDoubleTap: () {
+              log('double tap');
+            },
             child: Stack(
               children: [
                 child,
@@ -883,8 +887,8 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
   }
 }
 
-class _ZoomBuilt extends StatelessWidget {
-  const _ZoomBuilt({
+class _NewZoomBuilt extends StatelessWidget {
+  const _NewZoomBuilt({
     Key? key,
     required this.child,
     required this.childKey,
@@ -1004,7 +1008,7 @@ Quad _getAxisAlignedBoundingBoxWithRotation(Rect rect, double rotation) {
     rotationMatrix.transform3(Vector3(rect.right, rect.bottom, 0.0)),
     rotationMatrix.transform3(Vector3(rect.left, rect.bottom, 0.0)),
   );
-  return Zoom.getAxisAlignedBoundingBox(boundariesRotated);
+  return NewZoom.getAxisAlignedBoundingBox(boundariesRotated);
 }
 
 Offset _exceedsBy(Quad boundary, Quad viewport) {
@@ -1016,7 +1020,7 @@ Offset _exceedsBy(Quad boundary, Quad viewport) {
   ];
   Offset largestExcess = Offset.zero;
   for (final Vector3 point in viewportPoints) {
-    final Vector3 pointInside = Zoom.getNearestPointInside(point, boundary);
+    final Vector3 pointInside = NewZoom.getNearestPointInside(point, boundary);
     final Offset excess = Offset(
       pointInside.x - point.x,
       pointInside.y - point.y,
