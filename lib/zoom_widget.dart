@@ -16,17 +16,24 @@ class Zoom extends StatefulWidget {
     this.boundaryMargin = EdgeInsets.zero,
     this.maxScale = 2.5,
     this.transformationController,
-    required Widget this.child,
+    required this.child,
     this.backgroundColor = Colors.grey,
     this.canvasColor = Colors.white,
-    required this.maxZoomHeight,
-    required this.maxZoomWidth,
+    this.maxZoomHeight,
+    this.maxZoomWidth,
     this.zoomSensibility = 1.0,
     this.centerOnScale = true,
     this.opacityScrollBars = 0.5,
     this.colorScrollBars = Colors.black12,
     this.scrollWeight = 10,
     this.radiusScrollBars = 4,
+    this.doubleTapScaleChange = 1.3,
+    this.doubleTapAnimDuration = const Duration(milliseconds: 500),
+    this.doubleTapZoom = true,
+    this.coverChild = false,
+    this.initScale,
+    this.initPosition,
+    this.enableScroll = true,
   })  : assert(maxScale > 0),
         assert(!maxScale.isNaN),
         assert(
@@ -42,10 +49,10 @@ class Zoom extends StatefulWidget {
   final Color backgroundColor;
   final EdgeInsets boundaryMargin;
   final Color canvasColor;
-  final Widget? child;
+  final Widget child;
   final double maxScale;
-  final double maxZoomHeight;
-  final double maxZoomWidth;
+  final double? maxZoomHeight;
+  final double? maxZoomWidth;
   final TransformationController? transformationController;
   final double zoomSensibility;
   final bool centerOnScale;
@@ -53,8 +60,14 @@ class Zoom extends StatefulWidget {
   final Color colorScrollBars;
   final double scrollWeight;
   final double radiusScrollBars;
+  final double doubleTapScaleChange;
+  final Duration doubleTapAnimDuration;
+  final bool doubleTapZoom;
+  final bool coverChild;
+  final double? initScale;
+  final Offset? initPosition;
+  final bool enableScroll;
 
-  @visibleForTesting
   static Vector3 getNearestPointOnLine(Vector3 point, Vector3 l1, Vector3 l2) {
     final double lengthSquared = math.pow(l2.x - l1.x, 2.0).toDouble() +
         math.pow(l2.y - l1.y, 2.0).toDouble();
@@ -69,7 +82,6 @@ class Zoom extends StatefulWidget {
     return l1 + l1L2 * fraction;
   }
 
-  @visibleForTesting
   static Quad getAxisAlignedBoundingBox(Quad quad) {
     final double minX = math.min(
       quad.point0.x,
@@ -119,7 +131,6 @@ class Zoom extends StatefulWidget {
     );
   }
 
-  @visibleForTesting
   static bool pointIsInside(Vector3 point, Quad quad) {
     final Vector3 aM = point - quad.point0;
     final Vector3 aB = quad.point1 - quad.point0;
@@ -133,7 +144,6 @@ class Zoom extends StatefulWidget {
     return 0 <= aMAB && aMAB <= aBAB && 0 <= aMAD && aMAD <= aDAD;
   }
 
-  @visibleForTesting
   static Vector3 getNearestPointInside(Vector3 point, Quad quad) {
     if (pointIsInside(point, quad)) {
       return point;
@@ -171,6 +181,8 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
   final GlobalKey _parentKey = GlobalKey();
   Animation<Offset>? _animation;
   late AnimationController _controller;
+  Animation<double>? _scaleAnimation;
+  late AnimationController _scaleController;
   Axis? _panAxis;
   Offset? _referenceFocalPoint;
   double? _scaleStart;
@@ -182,6 +194,9 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
   Size parentSize = Size.zero;
   Size childSize = Size.zero;
   Orientation? _orientation;
+  Offset? _doubleTapFocalPoint;
+  bool doubleTapZoomIn = true;
+  bool firstDraw = true;
 
   static const double _kDrag = 0.0000135;
 
@@ -221,13 +236,13 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     switch (scrollType) {
       case _ScrollType.horizontal:
         return _getMatrixTranslation(matrix).dx.abs() /
-            ((widget.maxZoomWidth * matrix.getMaxScaleOnAxis()) -
+            ((childSize.width * matrix.getMaxScaleOnAxis()) -
                 parentSize.width) *
             100.0;
 
       case _ScrollType.vertical:
         return _getMatrixTranslation(matrix).dy.abs() /
-            ((widget.maxZoomHeight * matrix.getMaxScaleOnAxis()) -
+            ((childSize.height * matrix.getMaxScaleOnAxis()) -
                 parentSize.height) *
             100.0;
     }
@@ -238,49 +253,21 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     double percent = 0;
     switch (scrollType) {
       case _ScrollType.horizontal:
-        percent = (parentSize.width /
-            (widget.maxZoomWidth * matrix.getMaxScaleOnAxis()));
+        percent =
+            (parentSize.width / (childSize.width * matrix.getMaxScaleOnAxis()));
         return parentSize.width * percent;
 
       case _ScrollType.vertical:
         percent = (parentSize.height /
-            (widget.maxZoomHeight * matrix.getMaxScaleOnAxis()));
+            (childSize.height * matrix.getMaxScaleOnAxis()));
         return parentSize.height * percent;
     }
   }
 
-  Matrix4 _matrixTranslate(Matrix4 matrix, Offset translation,
-      {bool fixOffset = false}) {
-    if (translation == Offset.zero) {
-      return matrix.clone();
-    }
-
-    final Offset
-        alignedTranslation = /*widget.alignPanAxis && _panAxis != null
-        ? _alignAxis(translation, _panAxis!)
-        :*/
-        translation;
-
-    final Matrix4 nextMatrix = matrix.clone()
-      ..translate(
-        alignedTranslation.dx,
-        alignedTranslation.dy,
-      );
-
-    final Quad nextViewport = _transformViewport(nextMatrix, _viewport);
-
-    if (_boundaryRect.isInfinite && !fixOffset) {
-      return nextMatrix;
-    }
-
-    final Quad boundariesAabbQuad = _getAxisAlignedBoundingBoxWithRotation(
-      _boundaryRect,
-      0.0,
-    );
-
-    if (widget.maxZoomWidth * matrix.getMaxScaleOnAxis() >
+  void _updateScroll(Matrix4 matrix) {
+    if (childSize.width * matrix.getMaxScaleOnAxis() >
         parentSize.width + (parentSize.width * 0.01)) {
-      final horizontalPercent =
+      var horizontalPercent =
           _getScrollPercent(matrix, scrollType: _ScrollType.horizontal);
 
       final horizontalLength =
@@ -288,13 +275,13 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
 
       horizontalScrollNotifier.value = _ScrollBarData(
           length: horizontalLength,
-          position: (horizontalPercent / 100) *
+          position: (horizontalPercent / 100.0) *
               (parentSize.width - horizontalLength));
     } else {
       horizontalScrollNotifier.value = _ScrollBarData(length: 0, position: 0);
     }
 
-    if (widget.maxZoomHeight * matrix.getMaxScaleOnAxis() >
+    if (childSize.height * matrix.getMaxScaleOnAxis() >
         parentSize.height + (parentSize.height * 0.01)) {
       final verticalPercent =
           _getScrollPercent(matrix, scrollType: _ScrollType.vertical);
@@ -309,10 +296,38 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     } else {
       verticalScrollNotifier.value = _ScrollBarData(length: 0, position: 0);
     }
+  }
+
+  Matrix4 _matrixTranslate(Matrix4 matrix, Offset translation,
+      {bool fixOffset = false}) {
+    if (translation == Offset.zero) {
+      return matrix.clone();
+    }
+
+    final Offset alignedTranslation = translation;
+
+    final Matrix4 nextMatrix = matrix.clone()
+      ..translate(
+        alignedTranslation.dx,
+        alignedTranslation.dy,
+      );
+
+    final Quad nextViewport = _transformViewport(nextMatrix, _viewport);
+
+    if (_boundaryRect.isInfinite && !fixOffset) {
+      _updateScroll(nextMatrix);
+      return nextMatrix;
+    }
+
+    final Quad boundariesAabbQuad = _getAxisAlignedBoundingBoxWithRotation(
+      _boundaryRect,
+      0.0,
+    );
 
     final Offset offendingDistance =
         _exceedsBy(boundariesAabbQuad, nextViewport);
     if (offendingDistance == Offset.zero) {
+      _updateScroll(nextMatrix);
       return nextMatrix;
     }
 
@@ -335,6 +350,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     final Offset offendingCorrectedDistance =
         _exceedsBy(boundariesAabbQuad, correctedViewport);
     if (offendingCorrectedDistance == Offset.zero && !fixOffset) {
+      _updateScroll(correctedMatrix);
       return correctedMatrix;
     }
 
@@ -378,7 +394,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
       calculateMids(childSize.height < childSize.width);
     }
 
-    return matrix.clone()
+    final midMatrix = matrix.clone()
       ..setTranslation(Vector3(
         unidirectionalCorrectedTotalTranslation.dx +
             (widget.centerOnScale
@@ -394,6 +410,8 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
                 : 0),
         0.0,
       ));
+    _updateScroll(midMatrix);
+    return midMatrix;
   }
 
   Matrix4 _matrixScale(Matrix4 matrix, double scale, {bool fixScale = false}) {
@@ -623,6 +641,27 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     }
   }
 
+  void _onDoubleTap() {
+    if (!_scaleController.isAnimating && widget.doubleTapZoom) {
+      doubleTapZoomIn = _transformationController!.value.getMaxScaleOnAxis() <
+          widget.maxScale;
+
+      _scaleAnimation = Tween<double>(
+        begin: _transformationController!.value.getMaxScaleOnAxis(),
+        end: widget.maxScale,
+      ).animate(CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.decelerate,
+      ));
+      _scaleController.duration = doubleTapZoomIn
+          ? Duration(
+              milliseconds: 100 + widget.doubleTapAnimDuration.inMilliseconds)
+          : widget.doubleTapAnimDuration;
+      _scaleAnimation!.addListener(_onAnimateScale);
+      _scaleController.forward();
+    }
+  }
+
   void _onAnimate() {
     if (!_controller.isAnimating) {
       _panAxis = null;
@@ -648,6 +687,38 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     );
   }
 
+  void _onAnimateScale() {
+    if (!_scaleController.isAnimating) {
+      _scaleAnimation?.removeListener(_onAnimateScale);
+      _scaleAnimation = null;
+      _scaleController.reset();
+      return;
+    }
+    final double scaleChange = doubleTapZoomIn
+        ? widget.doubleTapScaleChange
+        : 1 - (widget.doubleTapScaleChange - 1);
+
+    final Offset focalPointScene = _transformationController!.toScene(
+      _doubleTapFocalPoint ?? Offset.zero,
+    );
+
+    _transformationController!.value = _matrixScale(
+      _transformationController!.value,
+      scaleChange,
+    );
+
+    final Offset focalPointSceneScaled = _transformationController!.toScene(
+      _doubleTapFocalPoint ?? Offset.zero,
+    );
+
+    Offset diference = focalPointSceneScaled - focalPointScene;
+
+    _transformationController!.value = _matrixTranslate(
+      _transformationController!.value,
+      diference,
+    );
+  }
+
   void _onTransformationControllerChange() {
     setState(() {});
   }
@@ -660,6 +731,9 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
         widget.transformationController ?? TransformationController();
     _transformationController!.addListener(_onTransformationControllerChange);
     _controller = AnimationController(
+      vsync: this,
+    );
+    _scaleController = AnimationController(
       vsync: this,
     );
   }
@@ -698,6 +772,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
   @override
   void dispose() {
     _controller.dispose();
+    _scaleController.dispose();
     _transformationController!
         .removeListener(_onTransformationControllerChange);
     if (widget.transformationController == null) {
@@ -707,36 +782,24 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
   }
 
   @override
-  void didChangeDependencies() {
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
-      final RenderBox parentRenderBox =
-          _parentKey.currentContext!.findRenderObject()! as RenderBox;
-      parentSize = parentRenderBox.size;
-      final RenderBox childRenderBox =
-          _childKey.currentContext!.findRenderObject()! as RenderBox;
-      childSize = childRenderBox.size;
-    });
-
-    super.didChangeDependencies();
-  }
-
-  @override
   Widget build(BuildContext context) {
     Widget child;
     child = _ZoomBuilt(
       childKey: _childKey,
       constrained: false,
       matrix: _transformationController!.value,
-      child: Listener(
-        onPointerDown: (PointerDownEvent event) {},
-        child: Center(
-          child: Container(
-              width: widget.maxZoomWidth,
-              height: widget.maxZoomHeight,
+      child: (widget.maxZoomWidth == null || widget.maxZoomHeight == null)
+          ? Container(
               color: widget.canvasColor,
-              child: widget.child),
-        ),
-      ),
+              child: widget.child,
+            )
+          : Center(
+              child: Container(
+                  width: widget.maxZoomWidth,
+                  height: widget.maxZoomHeight,
+                  color: widget.canvasColor,
+                  child: widget.child),
+            ),
     );
 
     void fixScale(double scale) {
@@ -806,6 +869,61 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
               -0.01,
             ),
           );
+
+          void fitChild(bool condition) {
+            if (condition) {
+              _transformationController!.value = _matrixScale(
+                  _transformationController!.value,
+                  parentSize.height / childSize.height,
+                  fixScale: true);
+
+              _transformationController!.value = _matrixTranslate(
+                  _transformationController!.value, Offset(-0.01, -0.01),
+                  fixOffset: true);
+            } else {
+              _transformationController!.value = _matrixScale(
+                  _transformationController!.value,
+                  parentSize.width / childSize.width,
+                  fixScale: true);
+
+              _transformationController!.value = _matrixTranslate(
+                  _transformationController!.value, Offset(-0.01, -0.01),
+                  fixOffset: true);
+            }
+          }
+
+          if (widget.coverChild) {
+            if (firstDraw &&
+                (childSize.width > parentSize.width ||
+                    childSize.height > parentSize.height)) {
+              if (childSize.width == childSize.height) {
+                fitChild(parentSize.width > parentSize.height);
+              } else {
+                fitChild(childSize.width < childSize.height);
+              }
+              firstDraw = false;
+            }
+          } else {
+            if (widget.initScale != null) {
+              _transformationController!.value = _matrixScale(
+                  _transformationController!.value, widget.initScale ?? 0.0,
+                  fixScale: true);
+
+              _transformationController!.value = _matrixTranslate(
+                  _transformationController!.value, Offset(-0.01, -0.01),
+                  fixOffset: true);
+            }
+            if (widget.initPosition != null) {
+              _transformationController!.value = _matrixTranslate(
+                _transformationController!.value,
+                widget.initPosition ?? Offset.zero,
+              );
+
+              _referenceFocalPoint = _transformationController!.toScene(
+                widget.initPosition ?? Offset.zero,
+              );
+            }
+          }
         });
       }
 
@@ -820,62 +938,69 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
         child: Listener(
           key: _parentKey,
           onPointerSignal: _receivedPointerSignal,
+          onPointerDown: (PointerDownEvent event) {
+            _doubleTapFocalPoint = event.localPosition;
+          },
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onScaleEnd: _onScaleEnd,
             onScaleStart: _onScaleStart,
             onScaleUpdate: _onScaleUpdate,
-            onDoubleTap: () {},
-            child: Stack(
-              children: [
-                child,
-                ValueListenableBuilder<_ScrollBarData>(
-                    valueListenable: horizontalScrollNotifier,
-                    builder: (_, scrollData, __) {
-                      return scrollData.length == 0
-                          ? Container()
-                          : Positioned(
-                              top: parentSize.height - widget.scrollWeight,
-                              left: scrollData.position,
+            onDoubleTap: _onDoubleTap,
+            child: widget.enableScroll
+                ? Stack(
+                    children: [
+                      child,
+                      ValueListenableBuilder<_ScrollBarData>(
+                          valueListenable: horizontalScrollNotifier,
+                          builder: (_, scrollData, __) {
+                            return scrollData.length == 0
+                                ? Container()
+                                : Positioned(
+                                    top:
+                                        parentSize.height - widget.scrollWeight,
+                                    left: scrollData.position,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: widget.colorScrollBars
+                                              .withAlpha(
+                                                  (opacity * 255).toInt()),
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(
+                                              widget.radiusScrollBars,
+                                            ),
+                                            topRight: Radius.circular(
+                                                widget.radiusScrollBars),
+                                          )),
+                                      height: widget.scrollWeight,
+                                      width: scrollData.length,
+                                    ),
+                                  );
+                          }),
+                      ValueListenableBuilder<_ScrollBarData>(
+                          valueListenable: verticalScrollNotifier,
+                          builder: (_, scrollData, __) {
+                            return Positioned(
+                              left: parentSize.width - widget.scrollWeight,
+                              top: scrollData.position,
                               child: Container(
                                 decoration: BoxDecoration(
                                     color: widget.colorScrollBars
                                         .withAlpha((opacity * 255).toInt()),
                                     borderRadius: BorderRadius.only(
                                       topLeft: Radius.circular(
-                                        widget.radiusScrollBars,
-                                      ),
-                                      topRight: Radius.circular(
+                                          widget.radiusScrollBars),
+                                      bottomLeft: Radius.circular(
                                           widget.radiusScrollBars),
                                     )),
-                                height: widget.scrollWeight,
-                                width: scrollData.length,
+                                height: scrollData.length,
+                                width: widget.scrollWeight,
                               ),
                             );
-                    }),
-                ValueListenableBuilder<_ScrollBarData>(
-                    valueListenable: verticalScrollNotifier,
-                    builder: (_, scrollData, __) {
-                      return Positioned(
-                        left: parentSize.width - widget.scrollWeight,
-                        top: scrollData.position,
-                        child: Container(
-                          decoration: BoxDecoration(
-                              color: widget.colorScrollBars
-                                  .withAlpha((opacity * 255).toInt()),
-                              borderRadius: BorderRadius.only(
-                                topLeft:
-                                    Radius.circular(widget.radiusScrollBars),
-                                bottomLeft:
-                                    Radius.circular(widget.radiusScrollBars),
-                              )),
-                          height: scrollData.length,
-                          width: widget.scrollWeight,
-                        ),
-                      );
-                    })
-              ],
-            ),
+                          }),
+                    ],
+                  )
+                : child,
           ),
         ),
       );

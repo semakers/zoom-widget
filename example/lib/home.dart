@@ -12,11 +12,9 @@ class HomePage extends StatelessWidget {
       ),
       body: Zoom(
         maxScale: 2,
-        maxZoomHeight: 1500,
-        maxZoomWidth: 1500,
         zoomSensibility: 0.05,
-        centerOnScale: true,
-        child: Center(child: FlutterLogo(size: 1500)),
+        coverChild: true,
+        child: Center(child: FlutterLogo(size: 3000)),
       ),
     );
   }
