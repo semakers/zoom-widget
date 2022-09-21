@@ -1,3 +1,6 @@
+## [2.0.0]
+* Total refactor to use matrix operations.
+
 ## [0.1.3]
 * ios double tap support added. 
 
