@@ -42,7 +42,7 @@ Center flutter logo using all space of view port:
       );
 ```
 
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/init_total_zomm.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/init_total_zomm.gif" width="250" height="500" />
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/init_total_zomm.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/init_total_zomm.gif" width="250" height="500" />
 
 
 Center text with max width and max height:
@@ -57,7 +57,7 @@ Zoom(
 );
 ```
 
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/simple_zoom.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/simple_zoom.gif" width="250" height="500" />
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/simple_zoom.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/simple_zoom.gif" width="250" height="500" />
 
 ### Callbacks
 
@@ -147,14 +147,14 @@ Zoom(
 );
 ```
 
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/custom_zoom.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/custom_zoom.gif" width="250" height="500" />
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/custom_zoom.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/custom_zoom.gif" width="250" height="500" />
 
 
 ### Complex example
 
 It can be used for more complex things like an image gallery.
 
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/image_gallery.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/image_gallery.gif" width="250" height="500" />
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/image_gallery.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/image_gallery.gif" width="250" height="500" />
 
 
 **All examples of gifs are inside the example**
