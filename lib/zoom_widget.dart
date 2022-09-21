@@ -12,61 +12,57 @@ typedef ZoomWidgetBuilder = Widget Function(
 @immutable
 class Zoom extends StatefulWidget {
   Zoom({
-    Key? key,
-    this.boundaryMargin = EdgeInsets.zero,
-    this.maxScale = 2.5,
-    this.transformationController,
-    required this.child,
     this.backgroundColor = Colors.grey,
     this.canvasColor = Colors.white,
+    this.centerOnScale = true,
+    required this.child,
+    this.colorScrollBars = Colors.black12,
+    this.doubleTapAnimDuration = const Duration(milliseconds: 300),
+    this.doubleTapScaleChange = 1.1,
+    this.doubleTapZoom = true,
+    this.enableScroll = true,
+    this.initPosition,
+    this.initScale,
+    this.initTotalZoomOut = false,
+    Key? key,
+    this.maxScale = 2.5,
     this.maxZoomHeight,
     this.maxZoomWidth,
-    this.zoomSensibility = 1.0,
-    this.centerOnScale = true,
+    this.onPositionUpdate,
+    this.onScaleUpdate,
+    this.onTap,
     this.opacityScrollBars = 0.5,
-    this.colorScrollBars = Colors.black12,
-    this.scrollWeight = 10,
     this.radiusScrollBars = 4,
-    this.doubleTapScaleChange = 1.3,
-    this.doubleTapAnimDuration = const Duration(milliseconds: 500),
-    this.doubleTapZoom = true,
-    this.coverChild = false,
-    this.initScale,
-    this.initPosition,
-    this.enableScroll = true,
+    this.scrollWeight = 10,
+    this.transformationController,
+    this.zoomSensibility = 1.0,
   })  : assert(maxScale > 0),
         assert(!maxScale.isNaN),
-        assert(
-          (boundaryMargin.horizontal.isInfinite &&
-                  boundaryMargin.vertical.isInfinite) ||
-              (boundaryMargin.top.isFinite &&
-                  boundaryMargin.right.isFinite &&
-                  boundaryMargin.bottom.isFinite &&
-                  boundaryMargin.left.isFinite),
-        ),
         super(key: key);
 
   final Color backgroundColor;
-  final EdgeInsets boundaryMargin;
   final Color canvasColor;
+  final bool centerOnScale;
   final Widget child;
+  final Color colorScrollBars;
+  final Duration doubleTapAnimDuration;
+  final double doubleTapScaleChange;
+  final bool doubleTapZoom;
+  final bool enableScroll;
+  final Offset? initPosition;
+  final double? initScale;
+  final bool initTotalZoomOut;
   final double maxScale;
   final double? maxZoomHeight;
   final double? maxZoomWidth;
+  final Function(Offset)? onPositionUpdate;
+  final Function(double, double)? onScaleUpdate;
+  final Function()? onTap;
+  final double opacityScrollBars;
+  final double radiusScrollBars;
+  final double scrollWeight;
   final TransformationController? transformationController;
   final double zoomSensibility;
-  final bool centerOnScale;
-  final double opacityScrollBars;
-  final Color colorScrollBars;
-  final double scrollWeight;
-  final double radiusScrollBars;
-  final double doubleTapScaleChange;
-  final Duration doubleTapAnimDuration;
-  final bool doubleTapZoom;
-  final bool coverChild;
-  final double? initScale;
-  final Offset? initPosition;
-  final bool enableScroll;
 
   static Vector3 getNearestPointOnLine(Vector3 point, Vector3 l1, Vector3 l2) {
     final double lengthSquared = math.pow(l2.x - l1.x, 2.0).toDouble() +
@@ -202,13 +198,9 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
 
   Rect get _boundaryRect {
     assert(_childKey.currentContext != null);
-    assert(!widget.boundaryMargin.left.isNaN);
-    assert(!widget.boundaryMargin.right.isNaN);
-    assert(!widget.boundaryMargin.top.isNaN);
-    assert(!widget.boundaryMargin.bottom.isNaN);
 
     final Rect boundaryRect =
-        widget.boundaryMargin.inflateRect(Offset.zero & childSize);
+        EdgeInsets.zero.inflateRect(Offset.zero & childSize);
     assert(
       !boundaryRect.isEmpty,
       "Zoom's child must have nonzero dimensions.",
@@ -316,6 +308,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
 
     if (_boundaryRect.isInfinite && !fixOffset) {
       _updateScroll(nextMatrix);
+      widget.onPositionUpdate?.call(_getMatrixTranslation(nextMatrix));
       return nextMatrix;
     }
 
@@ -328,6 +321,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
         _exceedsBy(boundariesAabbQuad, nextViewport);
     if (offendingDistance == Offset.zero) {
       _updateScroll(nextMatrix);
+      widget.onPositionUpdate?.call(_getMatrixTranslation(nextMatrix));
       return nextMatrix;
     }
 
@@ -351,6 +345,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
         _exceedsBy(boundariesAabbQuad, correctedViewport);
     if (offendingCorrectedDistance == Offset.zero && !fixOffset) {
       _updateScroll(correctedMatrix);
+      widget.onPositionUpdate?.call(_getMatrixTranslation(correctedMatrix));
       return correctedMatrix;
     }
 
@@ -411,6 +406,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
         0.0,
       ));
     _updateScroll(midMatrix);
+    widget.onPositionUpdate?.call(_getMatrixTranslation(midMatrix));
     return midMatrix;
   }
 
@@ -426,42 +422,28 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     final nextScale =
         (matrix.clone()..scale(sensibleScale)).getMaxScaleOnAxis();
 
-    if (!fixScale) {
-      if (childSize.width == childSize.height) {
-        if (parentSize.height > parentSize.width) {
-          if ((childSize.width * nextScale) <
-                  parentSize.width -
-                      ((widget.boundaryMargin.right * 2) *
-                          matrix.getMaxScaleOnAxis()) &&
-              nextScale < 1.0) {
-            return matrix.clone();
-          }
-        } else {
-          if ((childSize.height * nextScale) <
-                  parentSize.height -
-                      ((widget.boundaryMargin.top * 2) *
-                          matrix.getMaxScaleOnAxis()) &&
-              nextScale < 1.0) {
-            return matrix.clone();
-          }
+    if (childSize.width == childSize.height) {
+      if (parentSize.height > parentSize.width) {
+        if ((childSize.width * nextScale) < parentSize.width &&
+            nextScale < 1.0) {
+          return matrix.clone();
         }
       } else {
-        if (childSize.height < childSize.width) {
-          if ((childSize.width * nextScale) <
-                  parentSize.width -
-                      ((widget.boundaryMargin.right * 2) *
-                          matrix.getMaxScaleOnAxis()) &&
-              nextScale < 1.0) {
-            return matrix.clone();
-          }
-        } else {
-          if ((childSize.height * nextScale) <
-                  parentSize.height -
-                      ((widget.boundaryMargin.top * 2) *
-                          matrix.getMaxScaleOnAxis()) &&
-              nextScale < 1.0) {
-            return matrix.clone();
-          }
+        if ((childSize.height * nextScale) < parentSize.height &&
+            nextScale < 1.0) {
+          return matrix.clone();
+        }
+      }
+    } else {
+      if (childSize.height < childSize.width) {
+        if ((childSize.width * nextScale) < parentSize.width &&
+            nextScale < 1.0) {
+          return matrix.clone();
+        }
+      } else {
+        if ((childSize.height * nextScale) < parentSize.height &&
+            nextScale < 1.0) {
+          return matrix.clone();
         }
       }
     }
@@ -469,8 +451,15 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     if (matrix.getMaxScaleOnAxis() > widget.maxScale && sensibleScale > 1) {
       return matrix.clone();
     }
+    final newMatrix = matrix.clone()
+      ..scale(fixScale ? scale : sensibleScale.abs());
 
-    return matrix.clone()..scale(fixScale ? scale : sensibleScale.abs());
+    widget.onScaleUpdate?.call(
+      fixScale ? scale : sensibleScale.abs(),
+      newMatrix.getMaxScaleOnAxis(),
+    );
+
+    return newMatrix;
   }
 
   bool _gestureIsSupported(_GestureType? gestureType) {
@@ -694,9 +683,15 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
       _scaleController.reset();
       return;
     }
-    final double scaleChange = doubleTapZoomIn
-        ? widget.doubleTapScaleChange
-        : 1 - (widget.doubleTapScaleChange - 1);
+    double scaleChange;
+
+    if (widget.doubleTapScaleChange < 1.0) {
+      scaleChange = doubleTapZoomIn ? 1.01 : 0.99;
+    } else {
+      scaleChange = doubleTapZoomIn
+          ? widget.doubleTapScaleChange
+          : 1 - (widget.doubleTapScaleChange - 1);
+    }
 
     final Offset focalPointScene = _transformationController!.toScene(
       _doubleTapFocalPoint ?? Offset.zero,
@@ -705,6 +700,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     _transformationController!.value = _matrixScale(
       _transformationController!.value,
       scaleChange,
+      fixScale: true,
     );
 
     final Offset focalPointSceneScaled = _transformationController!.toScene(
@@ -892,7 +888,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
             }
           }
 
-          if (widget.coverChild) {
+          if (widget.initTotalZoomOut) {
             if (firstDraw &&
                 (childSize.width > parentSize.width ||
                     childSize.height > parentSize.height)) {
@@ -947,6 +943,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
             onScaleStart: _onScaleStart,
             onScaleUpdate: _onScaleUpdate,
             onDoubleTap: _onDoubleTap,
+            onTap: widget.onTap,
             child: widget.enableScroll
                 ? Stack(
                     children: [

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/examples/custom_zoom.dart';
+import 'package:mobile/examples/init_total_zoom_out.dart';
+import 'package:mobile/examples/simple_zoom.dart';
+import 'package:mobile/examples/zoomeable_image_gallery.dart';
 import 'package:zoom_widget/zoom_widget.dart';
 
 class HomePage extends StatelessWidget {
@@ -8,13 +12,71 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Zoom example'),
+        title: Text('Zoom examples'),
       ),
-      body: Zoom(
-        maxScale: 2,
-        zoomSensibility: 0.05,
-        coverChild: true,
-        child: Center(child: FlutterLogo(size: 3000)),
+      body: ListView(
+        padding: EdgeInsets.all(
+          8.0,
+        ),
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SimpleZoom(),
+                ),
+              );
+            },
+            child: Text(
+              'Simple zoom',
+            ),
+          ),
+          SizedBox(
+            height: 8.0,
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => InitTotalZoomOut(),
+                ),
+              );
+            },
+            child: Text(
+              'Init total zoom out',
+            ),
+          ),
+          SizedBox(
+            height: 8.0,
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => CustomZoom(),
+                ),
+              );
+            },
+            child: Text(
+              'Custom zoom',
+            ),
+          ),
+          SizedBox(
+            height: 8.0,
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ZoomeableImageGallery(),
+                ),
+              );
+            },
+            child: Text(
+              'Zoomeable image gallery',
+            ),
+          ),
+        ],
       ),
     );
   }
