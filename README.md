@@ -12,7 +12,7 @@ Add to pubspec.yaml:
 
 ```yaml
 dependencies:
-zoom_widget: ^0.1.3
+zoom_widget: ^2.0.0
 ```
 
 
@@ -27,8 +27,25 @@ You only need to create an instance of the Zoom class in the child of your Scaff
 import 'package:zoom_widget/zoom_widget.dart';
 ```
 
-### Simple example
+### Simple examples
 
+Center flutter logo using all space of view port:
+
+```dart
+ Zoom(
+        initTotalZoomOut: true,
+        child: Center(
+          child: FlutterLogo(
+            size: 1000,
+          ),
+        ),
+      );
+```
+
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/init_total_zomm.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/init_total_zomm.gif" width="250" height="500" />
+
+
+Center text with max width and max height:
 
 ```dart
 Zoom(
@@ -39,6 +56,8 @@ Zoom(
     )
 );
 ```
+
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/simple_zoom.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/simple_zoom.gif" width="250" height="500" />
 
 ### Callbacks
 
@@ -50,23 +69,18 @@ Zoom(
     maxZoomHeight: 1800,
     onTap: (){
         print("Widget clicked");
-    }
+    },
     onPositionUpdate: (Offset position){
-
         print(position);
-
     },
     onScaleUpdate: (double scale,double zoom){
-
         print("$scale  $zoom");
-
     },
     child: Center(
         child: Text("Happy zoom!!"),
     )
 );
 ```
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/first_example.gif" width="250" height="500" />
 
 ### Customize properties
 
@@ -86,11 +100,17 @@ Customizing the properties you can get amazing results.
 - opacityScrollBars **double 0.0-1.0**.
 - colorScrollBars **Color**.
 - centerOnScale **bool**.
-- initZoom **double 0.0-1.0**.
+- initZoom (Depreceted) **double**.
+- initPosition **Offset**.
+- initScale **double**
 - enableScroll **bool**.
 - zoomSensibility  **double**.
 - doubleTapZoom **bool**.
-
+- transformationController **TransformationController**.
+- radiusScrollBars **double**.
+- doubleTapScaleChange **double**.
+- doubleTapAnimDuration **Duration**.
+- initTotalZoomOut **bool**.
 ### Customized properties example
 
 
@@ -106,8 +126,7 @@ Zoom(
     centerOnScale: true,
     enableScroll: true,
     doubleTapZoom: true,
-    zoomSensibility: 2.3,
-    initZoom: 0.0,
+    zoomSensibility: 0.05,
     onTap: (){ 
         print("Widget clicked");
     }
@@ -128,27 +147,16 @@ Zoom(
 );
 ```
 
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/second_example.gif" width="250" height="500" />
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/custom_zoom.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/custom_zoom.gif" width="250" height="500" />
 
-## Examples
 
-### Mobile
+### Complex example
 
-In the **example/mobile** folder you will find the example ready to run with ***Flutter*** using the commands.
+It can be used for more complex things like an image gallery.
 
-```shell
-flutter pub get
-```
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/image_gallery.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/master/gif_examples/image_gallery.gif" width="250" height="500" />
 
-```shell
-flutter run
-```
 
-### Desktop
-
-In the **example/desktop** folder you will find the example ready to run with ***Hover***.
-
-[Hover - Run Flutter apps on the desktop with hot-reload](https://github.com/go-flutter-desktop/hover)
-
+**All examples of gifs are inside the example**
 
 
