@@ -154,7 +154,7 @@ Zoom(
 
 It can be used for more complex things like an image gallery.
 
-<img src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/custom_zoom.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/image_gallery.gif" width="250" height="500" />
+<img src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/image_gallery.gif" data-canonical-src="https://raw.githubusercontent.com/semakers/zoom-widget/matrix_operations/gif_examples/image_gallery.gif" width="250" height="500" />
 
 
 **All examples of gifs are inside the example**
