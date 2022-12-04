@@ -30,6 +30,7 @@ class Zoom extends StatefulWidget {
     this.maxZoomWidth,
     this.onPositionUpdate,
     this.onScaleUpdate,
+    this.onPanUpPosition,
     this.onTap,
     this.opacityScrollBars = 0.5,
     this.radiusScrollBars = 4,
@@ -57,6 +58,7 @@ class Zoom extends StatefulWidget {
   final double? maxZoomWidth;
   final Function(Offset)? onPositionUpdate;
   final Function(double, double)? onScaleUpdate;
+  final Function(Offset)? onPanUpPosition;
   final Function()? onTap;
   final double opacityScrollBars;
   final double radiusScrollBars;
@@ -170,7 +172,8 @@ class Zoom extends StatefulWidget {
   State<Zoom> createState() => _ZoomState();
 }
 
-class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
+class _ZoomState extends State<Zoom>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   TransformationController? _transformationController;
 
   final GlobalKey _childKey = GlobalKey();
@@ -722,6 +725,7 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance?.addObserver(this);
 
     _transformationController =
         widget.transformationController ?? TransformationController();
@@ -732,6 +736,13 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     _scaleController = AnimationController(
       vsync: this,
     );
+  }
+
+  @override
+  void didChangeMetrics() {
+    setState(() {
+      recalculateSizes();
+    });
   }
 
   @override
@@ -771,10 +782,133 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
     _scaleController.dispose();
     _transformationController!
         .removeListener(_onTransformationControllerChange);
+    WidgetsBinding.instance?.removeObserver(this);
     if (widget.transformationController == null) {
       _transformationController!.dispose();
     }
     super.dispose();
+  }
+
+  void fixScale(double scale) {
+    _transformationController!.value = _matrixScale(
+      _transformationController!.value,
+      scale,
+      fixScale: true,
+    );
+    _transformationController!.toScene(
+      _referenceFocalPoint ?? Offset.zero,
+    );
+    _transformationController!.toScene(
+      _referenceFocalPoint ?? Offset.zero,
+    );
+  }
+
+  void recalculateSizes() {
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      final RenderBox parentRenderBox =
+          _parentKey.currentContext!.findRenderObject()! as RenderBox;
+      parentSize = parentRenderBox.size;
+      final RenderBox childRenderBox =
+          _childKey.currentContext!.findRenderObject()! as RenderBox;
+      childSize = childRenderBox.size;
+      double scale = 0;
+
+      final currentScale = _transformationController!.value.getMaxScaleOnAxis();
+
+      _transformationController!.value = _matrixTranslate(
+          _transformationController!.value,
+          Offset(
+            -0.01,
+            -0.01,
+          ),
+          fixOffset: true);
+
+      if (childSize.width == childSize.height) {
+        if (childSize.width > parentSize.width &&
+            ((childSize.width * currentScale) < parentSize.width ||
+                (childSize.height * currentScale) < parentSize.height)) {
+          scale = parentSize.width / (childSize.width * currentScale);
+          fixScale(scale);
+        }
+      } else {
+        if (childSize.width > childSize.height) {
+          if (childSize.width > parentSize.width &&
+              (childSize.width * currentScale) < parentSize.width) {
+            scale = parentSize.width / (childSize.width * currentScale);
+            fixScale(scale);
+          }
+        } else {
+          if (childSize.height > parentSize.height &&
+              (childSize.height * currentScale) < parentSize.height) {
+            scale = parentSize.height / (childSize.height * currentScale);
+            fixScale(scale);
+          }
+        }
+      }
+
+      _transformationController!.value = _matrixTranslate(
+        _transformationController!.value,
+        Offset(
+          -0.01,
+          -0.01,
+        ),
+      );
+
+      void fitChild(bool condition) {
+        if (condition) {
+          _transformationController!.value = _matrixScale(
+              _transformationController!.value,
+              parentSize.height / childSize.height,
+              fixScale: true);
+
+          _transformationController!.value = _matrixTranslate(
+              _transformationController!.value, Offset(-0.01, -0.01),
+              fixOffset: true);
+        } else {
+          _transformationController!.value = _matrixScale(
+              _transformationController!.value,
+              parentSize.width / childSize.width,
+              fixScale: true);
+
+          _transformationController!.value = _matrixTranslate(
+              _transformationController!.value, Offset(-0.01, -0.01),
+              fixOffset: true);
+        }
+      }
+
+      if (widget.initTotalZoomOut) {
+        if (firstDraw &&
+            (childSize.width > parentSize.width ||
+                childSize.height > parentSize.height)) {
+          if (childSize.width == childSize.height) {
+            fitChild(parentSize.width > parentSize.height);
+          } else {
+            fitChild(childSize.width < childSize.height);
+          }
+          firstDraw = false;
+        }
+      } else {
+        if (widget.initScale != null) {
+          _transformationController!.value = _matrixScale(
+              _transformationController!.value, widget.initScale ?? 0.0,
+              fixScale: true);
+
+          _transformationController!.value = _matrixTranslate(
+              _transformationController!.value, Offset(-0.01, -0.01),
+              fixOffset: true);
+        }
+        if (widget.initPosition != null) {
+          _transformationController!.value = _matrixTranslate(
+            _transformationController!.value,
+            widget.initPosition ?? Offset.zero,
+          );
+
+          _referenceFocalPoint = _transformationController!.toScene(
+            widget.initPosition ?? Offset.zero,
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -784,224 +918,120 @@ class _ZoomState extends State<Zoom> with TickerProviderStateMixin {
       childKey: _childKey,
       constrained: false,
       matrix: _transformationController!.value,
-      child: (widget.maxZoomWidth == null || widget.maxZoomHeight == null)
-          ? Container(
-              color: widget.canvasColor,
-              child: widget.child,
-            )
-          : Center(
-              child: Container(
-                  width: widget.maxZoomWidth,
-                  height: widget.maxZoomHeight,
-                  color: widget.canvasColor,
-                  child: widget.child),
-            ),
+      child: Listener(
+        onPointerUp: (event) {
+          if (widget.onPanUpPosition != null) {
+            widget.onPanUpPosition!(event.localPosition);
+          }
+        },
+        child: (widget.maxZoomWidth == null || widget.maxZoomHeight == null)
+            ? Container(
+                color: widget.canvasColor,
+                child: widget.child,
+              )
+            : Center(
+                child: Container(
+                    width: widget.maxZoomWidth,
+                    height: widget.maxZoomHeight,
+                    color: widget.canvasColor,
+                    child: widget.child),
+              ),
+      ),
     );
 
-    void fixScale(double scale) {
-      _transformationController!.value = _matrixScale(
-        _transformationController!.value,
-        scale,
-        fixScale: true,
-      );
-      _transformationController!.toScene(
-        _referenceFocalPoint ?? Offset.zero,
-      );
-      _transformationController!.toScene(
-        _referenceFocalPoint ?? Offset.zero,
-      );
-    }
+    return NotificationListener<SizeChangedLayoutNotification>(
+      onNotification: (notification) {
+        recalculateSizes();
+        return true;
+      },
+      child: OrientationBuilder(builder: (context, orientation) {
+        if (_orientation != orientation) {
+          _orientation = orientation;
+          recalculateSizes();
+        }
 
-    return OrientationBuilder(builder: (context, orientation) {
-      if (_orientation != orientation) {
-        _orientation = orientation;
-        WidgetsBinding.instance?.addPostFrameCallback((_) {
-          final RenderBox parentRenderBox =
-              _parentKey.currentContext!.findRenderObject()! as RenderBox;
-          parentSize = parentRenderBox.size;
-          final RenderBox childRenderBox =
-              _childKey.currentContext!.findRenderObject()! as RenderBox;
-          childSize = childRenderBox.size;
-          double scale = 0;
+        double opacity = widget.opacityScrollBars < 0
+            ? 0
+            : widget.opacityScrollBars > 1
+                ? 1
+                : widget.opacityScrollBars;
 
-          final currentScale =
-              _transformationController!.value.getMaxScaleOnAxis();
-
-          _transformationController!.value = _matrixTranslate(
-              _transformationController!.value,
-              Offset(
-                -0.01,
-                -0.01,
+        return ClipRect(
+          child: Container(
+            color: widget.backgroundColor,
+            child: Listener(
+              key: _parentKey,
+              onPointerSignal: _receivedPointerSignal,
+              onPointerDown: (PointerDownEvent event) {
+                _doubleTapFocalPoint = event.localPosition;
+              },
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onScaleEnd: _onScaleEnd,
+                onScaleStart: _onScaleStart,
+                onScaleUpdate: _onScaleUpdate,
+                onDoubleTap: _onDoubleTap,
+                onTap: widget.onTap,
+                child: widget.enableScroll
+                    ? Stack(
+                        children: [
+                          child,
+                          ValueListenableBuilder<_ScrollBarData>(
+                              valueListenable: horizontalScrollNotifier,
+                              builder: (_, scrollData, __) {
+                                return scrollData.length == 0
+                                    ? Container()
+                                    : Positioned(
+                                        top: parentSize.height -
+                                            widget.scrollWeight,
+                                        left: scrollData.position,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: widget.colorScrollBars
+                                                  .withAlpha(
+                                                      (opacity * 255).toInt()),
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(
+                                                  widget.radiusScrollBars,
+                                                ),
+                                                topRight: Radius.circular(
+                                                    widget.radiusScrollBars),
+                                              )),
+                                          height: widget.scrollWeight,
+                                          width: scrollData.length,
+                                        ),
+                                      );
+                              }),
+                          ValueListenableBuilder<_ScrollBarData>(
+                              valueListenable: verticalScrollNotifier,
+                              builder: (_, scrollData, __) {
+                                return Positioned(
+                                  left: parentSize.width - widget.scrollWeight,
+                                  top: scrollData.position,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: widget.colorScrollBars
+                                            .withAlpha((opacity * 255).toInt()),
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(
+                                              widget.radiusScrollBars),
+                                          bottomLeft: Radius.circular(
+                                              widget.radiusScrollBars),
+                                        )),
+                                    height: scrollData.length,
+                                    width: widget.scrollWeight,
+                                  ),
+                                );
+                              }),
+                        ],
+                      )
+                    : child,
               ),
-              fixOffset: true);
-
-          if (childSize.width == childSize.height) {
-            if (childSize.width > parentSize.width &&
-                ((childSize.width * currentScale) < parentSize.width ||
-                    (childSize.height * currentScale) < parentSize.height)) {
-              scale = parentSize.width / (childSize.width * currentScale);
-              fixScale(scale);
-            }
-          } else {
-            if (childSize.width > childSize.height) {
-              if (childSize.width > parentSize.width &&
-                  (childSize.width * currentScale) < parentSize.width) {
-                scale = parentSize.width / (childSize.width * currentScale);
-                fixScale(scale);
-              }
-            } else {
-              if (childSize.height > parentSize.height &&
-                  (childSize.height * currentScale) < parentSize.height) {
-                scale = parentSize.height / (childSize.height * currentScale);
-                fixScale(scale);
-              }
-            }
-          }
-
-          _transformationController!.value = _matrixTranslate(
-            _transformationController!.value,
-            Offset(
-              -0.01,
-              -0.01,
             ),
-          );
-
-          void fitChild(bool condition) {
-            if (condition) {
-              _transformationController!.value = _matrixScale(
-                  _transformationController!.value,
-                  parentSize.height / childSize.height,
-                  fixScale: true);
-
-              _transformationController!.value = _matrixTranslate(
-                  _transformationController!.value, Offset(-0.01, -0.01),
-                  fixOffset: true);
-            } else {
-              _transformationController!.value = _matrixScale(
-                  _transformationController!.value,
-                  parentSize.width / childSize.width,
-                  fixScale: true);
-
-              _transformationController!.value = _matrixTranslate(
-                  _transformationController!.value, Offset(-0.01, -0.01),
-                  fixOffset: true);
-            }
-          }
-
-          if (widget.initTotalZoomOut) {
-            if (firstDraw &&
-                (childSize.width > parentSize.width ||
-                    childSize.height > parentSize.height)) {
-              if (childSize.width == childSize.height) {
-                fitChild(parentSize.width > parentSize.height);
-              } else {
-                fitChild(childSize.width < childSize.height);
-              }
-              firstDraw = false;
-            }
-          } else {
-            if (widget.initScale != null) {
-              _transformationController!.value = _matrixScale(
-                  _transformationController!.value, widget.initScale ?? 0.0,
-                  fixScale: true);
-
-              _transformationController!.value = _matrixTranslate(
-                  _transformationController!.value, Offset(-0.01, -0.01),
-                  fixOffset: true);
-            }
-            if (widget.initPosition != null) {
-              _transformationController!.value = _matrixTranslate(
-                _transformationController!.value,
-                widget.initPosition ?? Offset.zero,
-              );
-
-              _referenceFocalPoint = _transformationController!.toScene(
-                widget.initPosition ?? Offset.zero,
-              );
-            }
-          }
-        });
-      }
-
-      double opacity = widget.opacityScrollBars < 0
-          ? 0
-          : widget.opacityScrollBars > 1
-              ? 1
-              : widget.opacityScrollBars;
-
-      return Container(
-        color: widget.backgroundColor,
-        child: Listener(
-          key: _parentKey,
-          onPointerSignal: _receivedPointerSignal,
-          onPointerDown: (PointerDownEvent event) {
-            _doubleTapFocalPoint = event.localPosition;
-          },
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onScaleEnd: _onScaleEnd,
-            onScaleStart: _onScaleStart,
-            onScaleUpdate: _onScaleUpdate,
-            onDoubleTap: _onDoubleTap,
-            onTap: widget.onTap,
-            child: widget.enableScroll
-                ? Stack(
-                    children: [
-                      child,
-                      ValueListenableBuilder<_ScrollBarData>(
-                          valueListenable: horizontalScrollNotifier,
-                          builder: (_, scrollData, __) {
-                            return scrollData.length == 0
-                                ? Container()
-                                : Positioned(
-                                    top:
-                                        parentSize.height - widget.scrollWeight,
-                                    left: scrollData.position,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                          color: widget.colorScrollBars
-                                              .withAlpha(
-                                                  (opacity * 255).toInt()),
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(
-                                              widget.radiusScrollBars,
-                                            ),
-                                            topRight: Radius.circular(
-                                                widget.radiusScrollBars),
-                                          )),
-                                      height: widget.scrollWeight,
-                                      width: scrollData.length,
-                                    ),
-                                  );
-                          }),
-                      ValueListenableBuilder<_ScrollBarData>(
-                          valueListenable: verticalScrollNotifier,
-                          builder: (_, scrollData, __) {
-                            return Positioned(
-                              left: parentSize.width - widget.scrollWeight,
-                              top: scrollData.position,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: widget.colorScrollBars
-                                        .withAlpha((opacity * 255).toInt()),
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(
-                                          widget.radiusScrollBars),
-                                      bottomLeft: Radius.circular(
-                                          widget.radiusScrollBars),
-                                    )),
-                                height: scrollData.length,
-                                width: widget.scrollWeight,
-                              ),
-                            );
-                          }),
-                    ],
-                  )
-                : child,
           ),
-        ),
-      );
-    });
+        );
+      }),
+    );
   }
 }
 
