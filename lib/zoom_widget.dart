@@ -31,6 +31,7 @@ class Zoom extends StatefulWidget {
     this.onPositionUpdate,
     this.onScaleUpdate,
     this.onPanUpPosition,
+    this.onMinZoom,
     this.onTap,
     this.opacityScrollBars = 0.5,
     this.radiusScrollBars = 4,
@@ -59,6 +60,7 @@ class Zoom extends StatefulWidget {
   final Function(Offset)? onPositionUpdate;
   final Function(double, double)? onScaleUpdate;
   final Function(Offset)? onPanUpPosition;
+  final Function(bool)? onMinZoom;
   final Function()? onTap;
   final double opacityScrollBars;
   final double radiusScrollBars;
@@ -259,6 +261,17 @@ class _ZoomState extends State<Zoom>
     }
   }
 
+  void onDisabledScrolls() {
+    if (horizontalScrollNotifier.value.length == 0 &&
+        horizontalScrollNotifier.value.position == 0 &&
+        verticalScrollNotifier.value.length == 0 &&
+        verticalScrollNotifier.value.position == 0) {
+      widget.onMinZoom?.call(true);
+    } else {
+      widget.onMinZoom?.call(false);
+    }
+  }
+
   void _updateScroll(Matrix4 matrix) {
     if (childSize.width * matrix.getMaxScaleOnAxis() >
         parentSize.width + (parentSize.width * 0.01)) {
@@ -274,6 +287,7 @@ class _ZoomState extends State<Zoom>
               (parentSize.width - horizontalLength));
     } else {
       horizontalScrollNotifier.value = _ScrollBarData(length: 0, position: 0);
+      onDisabledScrolls();
     }
 
     if (childSize.height * matrix.getMaxScaleOnAxis() >
@@ -290,6 +304,7 @@ class _ZoomState extends State<Zoom>
               (verticalPercent / 100) * (parentSize.height - verticalLength));
     } else {
       verticalScrollNotifier.value = _ScrollBarData(length: 0, position: 0);
+      onDisabledScrolls();
     }
   }
 
