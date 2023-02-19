@@ -1,6 +1,6 @@
 name: zoom_widget
 description: Widget to zoom on a canvas of modifiable size that a child widget can hold.
-version: 2.0.0
+version: 2.0.1
 homepage: https://github.com/semakers
 
 environment:
