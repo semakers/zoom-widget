@@ -1,10 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:vector_math/vector_math_64.dart' show Quad, Vector3, Matrix4;
-
-import 'package:flutter/material.dart';
 
 typedef ZoomWidgetBuilder = Widget Function(
     BuildContext context, Quad viewport);
@@ -486,7 +485,6 @@ class _ZoomState extends State<Zoom>
         return true;
 
       case _GestureType.pan:
-
       case null:
         return true;
     }
@@ -740,7 +738,7 @@ class _ZoomState extends State<Zoom>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
     _transformationController =
         widget.transformationController ?? TransformationController();
@@ -797,7 +795,7 @@ class _ZoomState extends State<Zoom>
     _scaleController.dispose();
     _transformationController!
         .removeListener(_onTransformationControllerChange);
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     if (widget.transformationController == null) {
       _transformationController!.dispose();
     }
@@ -819,7 +817,7 @@ class _ZoomState extends State<Zoom>
   }
 
   void recalculateSizes() {
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final RenderBox parentRenderBox =
           _parentKey.currentContext!.findRenderObject()! as RenderBox;
       parentSize = parentRenderBox.size;
