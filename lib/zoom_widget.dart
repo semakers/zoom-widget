@@ -818,6 +818,10 @@ class _ZoomState extends State<Zoom>
 
   void recalculateSizes() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_parentKey.currentContext?.findRenderObject() == null) {
+        return;
+      }
+
       final RenderBox parentRenderBox =
           _parentKey.currentContext!.findRenderObject()! as RenderBox;
       parentSize = parentRenderBox.size;
